@@ -78,18 +78,18 @@ export default function AdminPage() {
     <div className="flex items-start justify-center min-h-full p-6 md:p-10 animate-fade-in">
       <div className="w-full max-w-3xl">
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold gradient-text">Pannello Amministrazione</h2>
-          <p className="text-sm text-zinc-500 mt-1">Gestisci utenti e statistiche</p>
+          <h2 className="text-2xl md:text-3xl font-bold gradient-text">Pannello Amministrazione</h2>
+          <p className="text-sm md:text-base text-zinc-500 mt-1">Gestisci utenti e statistiche</p>
         </div>
 
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {statCards.map(({ icon: Icon, label, value, iconColor }) => (
-              <div key={label} className="glass rounded-2xl p-5 border border-dark-600/20 text-center">
-                <div className="w-9 h-9 rounded-xl bg-dark-800/60 flex items-center justify-center mb-2 mx-auto">
-                  <Icon size={18} className={iconColor} />
+              <div key={label} className="glass rounded-2xl p-5 md:p-6 border border-dark-600/20 text-center">
+                <div className="w-9 md:w-11 h-9 md:h-11 rounded-xl bg-dark-800/60 flex items-center justify-center mb-2 mx-auto">
+                  <Icon size={18} className={`${iconColor} md:scale-125`} />
                 </div>
-                <p className="text-lg font-bold text-white">{value}</p>
+                <p className="text-lg md:text-xl font-bold text-white">{value}</p>
                 <p className="text-xs text-zinc-500">{label}</p>
               </div>
             ))}
@@ -97,11 +97,11 @@ export default function AdminPage() {
         )}
 
         <div className="glass rounded-2xl overflow-hidden border border-dark-600/20">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-dark-600/30">
-            <h3 className="text-sm font-semibold text-white">Utenti</h3>
+          <div className="flex items-center justify-between px-5 py-3.5 md:py-4 border-b border-dark-600/30">
+            <h3 className="text-sm md:text-base font-semibold text-white">Utenti</h3>
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 text-white px-3 py-2 rounded-xl text-xs font-medium transition-colors shadow-md shadow-accent-500/15"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-colors shadow-md shadow-accent-500/15"
             >
               <UserPlus size={14} />
               Nuovo
@@ -110,9 +110,9 @@ export default function AdminPage() {
 
           <div className="divide-y divide-dark-600/20">
             {users.map((u) => (
-              <div key={u.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-dark-700/15 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold ${
+              <div key={u.id} className="flex items-center justify-between px-5 py-3.5 md:py-4 hover:bg-dark-700/15 transition-colors">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className={`w-9 md:w-10 h-9 md:h-10 rounded-xl flex items-center justify-center text-xs md:text-sm font-bold ${
                     u.role === 'admin'
                       ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
                       : 'bg-dark-700 text-zinc-400 border border-dark-600/50'
@@ -120,15 +120,15 @@ export default function AdminPage() {
                     {u.username[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm text-white font-medium">{u.username}</p>
-                    <p className="text-xs text-zinc-500 hidden sm:block">{u.email}</p>
+                    <p className="text-sm md:text-base text-white font-medium">{u.username}</p>
+                    <p className="text-xs md:text-sm text-zinc-500 hidden sm:block">{u.email}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleRoleToggle(u.id, u.role)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors ${
                       u.role === 'admin'
                         ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
                         : 'bg-dark-700 text-zinc-400 border border-dark-600/50'
@@ -155,18 +155,18 @@ export default function AdminPage() {
             onClick={() => setShowCreate(false)}
           >
             <div
-              className="glass-strong rounded-2xl p-6 w-full max-w-sm animate-scale-in border border-dark-600/20 shadow-2xl"
+              className="glass-strong rounded-2xl p-6 md:p-7 w-full max-w-sm animate-scale-in border border-dark-600/20 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-base font-semibold text-white">Nuovo Utente</h3>
+                <h3 className="text-base md:text-lg font-semibold text-white">Nuovo Utente</h3>
                 <button onClick={() => setShowCreate(false)} className="p-1.5 hover:bg-dark-600 rounded-xl text-zinc-500 hover:text-zinc-300 transition-colors">
                   <X size={16} />
                 </button>
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2.5 rounded-xl mb-4 text-xs animate-fade-in">
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2.5 rounded-xl mb-4 text-xs md:text-sm animate-fade-in">
                   {error}
                 </div>
               )}
@@ -176,7 +176,7 @@ export default function AdminPage() {
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                   placeholder="Username"
-                  className="w-full bg-dark-800/60 text-white px-4 py-2.5 rounded-xl border border-dark-600/40 focus:border-accent-500/50 outline-none transition-colors text-sm placeholder-zinc-600"
+                  className="w-full bg-dark-800/60 text-white px-4 py-2.5 md:py-3 rounded-xl border border-dark-600/40 focus:border-accent-500/50 outline-none transition-colors text-sm md:text-base placeholder-zinc-600"
                   required
                 />
                 <input
@@ -184,7 +184,7 @@ export default function AdminPage() {
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="Email"
                   type="email"
-                  className="w-full bg-dark-800/60 text-white px-4 py-2.5 rounded-xl border border-dark-600/40 focus:border-accent-500/50 outline-none transition-colors text-sm placeholder-zinc-600"
+                  className="w-full bg-dark-800/60 text-white px-4 py-2.5 md:py-3 rounded-xl border border-dark-600/40 focus:border-accent-500/50 outline-none transition-colors text-sm md:text-base placeholder-zinc-600"
                   required
                 />
                 <input
@@ -192,21 +192,21 @@ export default function AdminPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Password"
                   type="password"
-                  className="w-full bg-dark-800/60 text-white px-4 py-2.5 rounded-xl border border-dark-600/40 focus:border-accent-500/50 outline-none transition-colors text-sm placeholder-zinc-600"
+                  className="w-full bg-dark-800/60 text-white px-4 py-2.5 md:py-3 rounded-xl border border-dark-600/40 focus:border-accent-500/50 outline-none transition-colors text-sm md:text-base placeholder-zinc-600"
                   required
                 />
                 <div className="flex gap-2 justify-end pt-2">
                   <button
                     type="button"
                     onClick={() => setShowCreate(false)}
-                    className="px-4 py-2 text-zinc-400 hover:text-white text-sm rounded-xl hover:bg-dark-700 transition-colors"
+                    className="px-4 py-2 md:py-2.5 text-zinc-400 hover:text-white text-sm md:text-base rounded-xl hover:bg-dark-700 transition-colors"
                   >
                     Annulla
                   </button>
                   <button
                     type="submit"
                     disabled={creating}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 text-white rounded-xl text-sm font-medium transition-colors shadow-md shadow-accent-500/15 disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 md:py-2.5 bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 text-white rounded-xl text-sm md:text-base font-medium transition-colors shadow-md shadow-accent-500/15 disabled:opacity-50"
                   >
                     {creating && <Loader2 size={14} className="animate-spin" />}
                     Crea

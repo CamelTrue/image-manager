@@ -251,7 +251,7 @@ export default function DashboardPage() {
       )}
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-3 px-5 md:px-8 py-4 border-b border-dark-600/30 shrink-0">
+        <div className="flex items-center gap-2 md:gap-3 px-3 md:px-8 py-2 md:py-4 border-b border-dark-600/30 shrink-0 flex-wrap">
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button
@@ -353,7 +353,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="flex-1 overflow-auto px-6 md:px-8 lg:px-10 py-6 md:py-8">
+        <div className="flex-1 overflow-auto px-3 md:px-8 lg:px-10 py-4 md:py-8">
           {trashedFilter ? (
             <>
               <div className="flex items-center gap-2 mb-4">
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                 )}
               </div>
               <div className="flex justify-center">
-                <div className="grid grid-cols-5 gap-5 w-full max-w-7xl">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5 w-full max-w-7xl">
                   {images.map((img) => (
                     <div key={img.id} className="group relative rounded-xl overflow-hidden bg-dark-800/40 border border-dark-600/30 shadow-sm hover:shadow-lg hover:shadow-black/20 transition-all duration-200 aspect-[4/3]">
                       <img src={getImageUrl(img.id)} alt={img.original} className="w-full h-full object-cover opacity-60" />

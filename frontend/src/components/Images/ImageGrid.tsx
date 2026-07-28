@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, FolderOpen, Images, Upload } from 'lucide-react'
+import { FolderOpen, Images, Upload } from 'lucide-react'
 import ImageCard from './ImageCard'
 import type { ImageInfo, FolderTree } from '../../types'
 
@@ -43,25 +43,22 @@ function FolderSection({ title, images, onDelete, onRename, onPreview, onFavorit
   onDragStart?: (id: number) => void
   onTags?: (image: ImageInfo) => void
 }) {
-  const [collapsed, setCollapsed] = useState(true)
+  const [showAll, setShowAll] = useState(false)
   const selectionMode = !!onToggleSelect
+  const visibleImages = showAll ? images : images.slice(0, 5)
+  const hasMore = images.length > 5
 
   return (
     <div className="mb-4">
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center gap-2 w-full text-left mb-2 group/header px-1"
-      >
-        {collapsed ? <ChevronRight size={14} className="text-zinc-500" /> : <ChevronDown size={14} className="text-zinc-500" />}
+      <div className="flex items-center gap-2 w-full text-left mb-2 px-1">
         <FolderOpen size={14} className="text-amber-500/70" />
-        <span className="text-xs font-medium text-zinc-300 group-hover/header:text-white transition-colors">{title}</span>
+        <span className="text-xs font-medium text-zinc-300">{title}</span>
         <span className="text-[10px] text-zinc-600 ml-0.5">{images.length}</span>
         <div className="flex-1 h-px bg-dark-600/30 ml-2" />
-      </button>
-      {!collapsed && (
-        <div className="flex justify-center">
-          <div className="grid grid-cols-5 gap-5 w-full max-w-7xl">
-            {images.map((image) => (
+      </div>
+      <div className="flex justify-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5 w-full max-w-7xl">
+          {visibleImages.map((image) => (
             <ImageCard
               key={image.id}
               image={image}
@@ -76,9 +73,18 @@ function FolderSection({ title, images, onDelete, onRename, onPreview, onFavorit
               onTags={onTags}
             />
           ))}
-          </div>
+          {hasMore && !showAll && (
+            <button
+              onClick={() => setShowAll(true)}
+              className="group relative rounded-2xl overflow-hidden border-2 border-dashed border-dark-600/30 hover:border-accent-500/40 bg-dark-800/30 hover:bg-dark-800/50 transition-all duration-200 aspect-[3/2] flex flex-col items-center justify-center gap-1.5"
+            >
+              <Images size={18} className="text-zinc-600 group-hover:text-accent-400/60 transition-colors" />
+              <span className="text-xs font-medium text-zinc-500 group-hover:text-accent-400 transition-colors">Mostra tutte</span>
+              <span className="text-[10px] text-zinc-600">+{images.length - 5}</span>
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -89,7 +95,7 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
   if (loading) {
     return (
       <div className="flex justify-center">
-        <div className="grid grid-cols-5 gap-5 w-full max-w-7xl">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5 w-full max-w-7xl">
           {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className="animate-shimmer rounded-xl aspect-[4/3]" />
           ))}
@@ -163,7 +169,7 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
 
   return (
     <div className="flex justify-center">
-      <div className="grid grid-cols-5 gap-5 w-full max-w-7xl">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5 w-full max-w-7xl">
         {images.map((image) => (
           <ImageCard
           key={image.id}

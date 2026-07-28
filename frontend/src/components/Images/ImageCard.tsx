@@ -199,7 +199,7 @@ export default function ImageCard({ image, onDelete, onRename, onPreview, onFavo
         )}
       </div>
 
-      <div className="px-4 py-3.5">
+      <div className="px-3 py-2.5 md:px-4 md:py-3.5">
         {renaming ? (
           <div className="flex items-center gap-1.5">
             <input
