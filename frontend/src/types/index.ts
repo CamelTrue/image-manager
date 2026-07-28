@@ -22,6 +22,7 @@ export interface ImageInfo {
   width: number
   height: number
   is_favorite: boolean
+  deleted_at: string | null
   created_at: string
   updated_at: string
 }

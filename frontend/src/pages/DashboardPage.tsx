@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Search, PanelLeftClose, PanelLeft, Trash2, Download, X, CheckSquare, Square, Archive, Lock, Eye } from 'lucide-react'
+import { Search, PanelLeftClose, PanelLeft, Trash2, Download, X, CheckSquare, Square, Archive, Lock, Eye, RotateCw } from 'lucide-react'
 import FolderTree from '../components/Folders/FolderTree'
 import ImageGrid from '../components/Images/ImageGrid'
 import ImagePreview from '../components/Images/ImagePreview'
@@ -8,7 +8,7 @@ import AdvancedSearch from '../components/Images/AdvancedSearch'
 import TagsEditor from '../components/Images/TagsEditor'
 import { useImages } from '../hooks/useImages'
 import { useFolders } from '../hooks/useFolders'
-import { getImageUrl, downloadZip, moveImage, toggleFavorite } from '../api/images'
+import { getImageUrl, downloadZip, moveImage, toggleFavorite, restoreImage, permanentDelete, emptyTrash } from '../api/images'
 import type { ImageInfo, FolderTree as FolderTreeType } from '../types'
 
 function findFolder(tree: FolderTreeType[], id: number): FolderTreeType | null {
@@ -51,6 +51,7 @@ export default function DashboardPage() {
     sortBy, setSortBy, sortOrder, setSortOrder,
     mimeType, setMimeType,
     favoriteFilter, setFavoriteFilter,
+    trashedFilter, setTrashedFilter,
     upload, remove, rename, refresh,
   } = useImages(selectedFolder)
   const { folders, create: createFolder, remove: deleteFolder, rename: renameFolder, refresh: refreshFolders, togglePrivate } = useFolders()
@@ -182,15 +183,17 @@ export default function DashboardPage() {
       >
         <FolderTree
           folders={folders}
-          selectedId={favoriteFilter ? null : selectedFolder}
-          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false) }}
+          selectedId={favoriteFilter || trashedFilter ? null : selectedFolder}
+          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false); setTrashedFilter(false) }}
           onCreate={createFolder}
           onDelete={deleteFolder}
           onRename={renameFolder}
           onDropImage={handleDropImage}
           onTogglePrivate={togglePrivate}
           favoriteFilter={favoriteFilter}
-          onFavoritesClick={() => { setFavoriteFilter(true); setSelectedFolder(null) }}
+          onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null) }}
+          trashedFilter={trashedFilter}
+          onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null) }}
         />
       </div>
 
@@ -206,15 +209,17 @@ export default function DashboardPage() {
             </div>
             <FolderTree
               folders={folders}
-              selectedId={favoriteFilter ? null : selectedFolder}
-              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false) }}
+              selectedId={favoriteFilter || trashedFilter ? null : selectedFolder}
+              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false); setTrashedFilter(false) }}
               onCreate={createFolder}
               onDelete={deleteFolder}
               onRename={renameFolder}
               onDropImage={handleDropImage}
               onTogglePrivate={togglePrivate}
               favoriteFilter={favoriteFilter}
-              onFavoritesClick={() => { setFavoriteFilter(true); setSelectedFolder(null); setSidebarOpen(false) }}
+              onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false) }}
+              trashedFilter={trashedFilter}
+              onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setSidebarOpen(false) }}
             />
           </div>
         </div>
@@ -304,7 +309,59 @@ export default function DashboardPage() {
         )}
 
         <div className="flex-1 overflow-auto p-3 md:p-4">
-          {showHiddenUI ? (
+          {trashedFilter ? (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <Trash2 size={16} className="text-zinc-400" />
+                <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Cestino</span>
+                <div className="flex-1" />
+                {images.length > 0 && (
+                  <button
+                    onClick={async () => { if (confirm('Svuotare il cestino? Le immagini verranno eliminate definitivamente.')) { await emptyTrash(); refresh() } }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 text-[11px] font-medium rounded-lg transition-colors"
+                  >
+                    <Trash2 size={12} />
+                    Svuota cestino
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+                {images.map((img) => (
+                  <div key={img.id} className="group relative rounded-xl overflow-hidden bg-dark-800/40 border border-dark-600/30 aspect-square">
+                    <img src={getImageUrl(img.id)} alt={img.original} className="w-full h-full object-cover opacity-60" />
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                      <button
+                        onClick={async () => { await restoreImage(img.id); refresh() }}
+                        className="p-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-colors"
+                        title="Ripristina"
+                      >
+                        <RotateCw size={14} />
+                      </button>
+                      <button
+                        onClick={async () => { if (confirm('Eliminare definitivamente questa immagine?')) { await permanentDelete(img.id); refresh() } }}
+                        className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
+                        title="Elimina definitivamente"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="absolute bottom-1 left-1 right-1">
+                      <p className="text-[10px] text-zinc-500 truncate px-1">{img.original}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {images.length === 0 && !loading && (
+                <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
+                  <div className="w-14 h-14 rounded-xl bg-dark-800/60 border border-dark-600/30 flex items-center justify-center mb-3">
+                    <Trash2 size={24} className="text-zinc-600" />
+                  </div>
+                  <p className="text-sm font-medium text-zinc-400">Cestino vuoto</p>
+                  <p className="text-[11px] text-zinc-600 mt-0.5">Le immagini eliminate resteranno qui per 30 giorni</p>
+                </div>
+              )}
+            </>
+          ) : showHiddenUI ? (
             <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in">
               <div className="p-4 rounded-2xl bg-dark-800/40 border border-dark-600/30 mb-4">
                 <Lock size={32} className="text-zinc-600 mx-auto" />

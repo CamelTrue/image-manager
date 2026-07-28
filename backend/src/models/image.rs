@@ -13,6 +13,7 @@ pub struct Image {
     pub width: i64,
     pub height: i64,
     pub is_favorite: bool,
+    pub deleted_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -29,6 +30,7 @@ pub struct ImageInfo {
     pub width: i64,
     pub height: i64,
     pub is_favorite: bool,
+    pub deleted_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -46,6 +48,7 @@ impl Image {
             width: self.width,
             height: self.height,
             is_favorite: self.is_favorite,
+            deleted_at: self.deleted_at.clone(),
             created_at: self.created_at.clone(),
             updated_at: self.updated_at.clone(),
         }

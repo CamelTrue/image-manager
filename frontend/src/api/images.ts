@@ -61,3 +61,12 @@ export const deleteShare = (token: string) =>
 
 export const toggleFavorite = (id: number) =>
   api.post<ImageInfo>(`/images/${id}/favorite`)
+
+export const restoreImage = (id: number) =>
+  api.post<ImageInfo>(`/images/${id}/restore`)
+
+export const permanentDelete = (id: number) =>
+  api.delete(`/images/${id}/permanent`)
+
+export const emptyTrash = () =>
+  api.delete('/trash/empty')

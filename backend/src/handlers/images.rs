@@ -11,7 +11,7 @@ use crate::models::image::*;
 use crate::services::storage::StorageService;
 use image::GenericImageView;
 
-const IMG_COLS: &str = "id, filename, original, mime_type, size, folder_id, owner_id, tags, width, height, is_favorite, created_at, updated_at";
+const IMG_COLS: &str = "id, filename, original, mime_type, size, folder_id, owner_id, tags, width, height, is_favorite, deleted_at, created_at, updated_at";
 
 fn row_to_image(row: &rusqlite::Row) -> rusqlite::Result<Image> {
     Ok(Image {
@@ -26,8 +26,9 @@ fn row_to_image(row: &rusqlite::Row) -> rusqlite::Result<Image> {
         width: row.get(8)?,
         height: row.get(9)?,
         is_favorite: row.get::<_, i64>(10)? != 0,
-        created_at: row.get(11)?,
-        updated_at: row.get(12)?,
+        deleted_at: row.get(11)?,
+        created_at: row.get(12)?,
+        updated_at: row.get(13)?,
     })
 }
 
@@ -46,9 +47,16 @@ pub async fn list_images(
     let min_size = query.get("min_size").and_then(|v| v.parse::<i64>().ok());
     let max_size = query.get("max_size").and_then(|v| v.parse::<i64>().ok());
     let favorite = query.get("favorite").cloned();
+    let trashed = query.get("trashed").cloned();
 
     let mut sql = format!("SELECT {} FROM images WHERE owner_id = ?1", IMG_COLS);
     let mut param_values: Vec<Box<dyn rusqlite::types::ToSql>> = vec![Box::new(user.user_id)];
+
+    if trashed.as_deref() == Some("true") {
+        sql.push_str(" AND deleted_at IS NOT NULL");
+    } else {
+        sql.push_str(" AND deleted_at IS NULL");
+    }
 
     if let Some(fid) = folder_id {
         sql.push_str(&format!(" AND folder_id = ?{}", param_values.len() + 1));
@@ -174,7 +182,7 @@ pub async fn get_image(
     let conn = db.conn.lock().unwrap();
 
     let image: Image = conn.query_row(
-        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
+        &format!("SELECT {} FROM images WHERE id = ?1 AND deleted_at IS NULL", IMG_COLS),
         params![image_id],
         row_to_image,
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;
@@ -196,7 +204,7 @@ pub async fn download_image(
     let conn = db.conn.lock().unwrap();
 
     let image: Image = conn.query_row(
-        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
+        &format!("SELECT {} FROM images WHERE id = ?1 AND deleted_at IS NULL", IMG_COLS),
         params![image_id],
         row_to_image,
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;
@@ -216,6 +224,65 @@ pub async fn download_image(
 
 pub async fn delete_image(
     db: web::Data<Database>,
+    _config: web::Data<Config>,
+    user: AuthUser,
+    path: web::Path<i64>,
+) -> Result<HttpResponse, AppError> {
+    let image_id = path.into_inner();
+    let conn = db.conn.lock().unwrap();
+
+    let owner_id: i64 = conn.query_row(
+        "SELECT owner_id FROM images WHERE id = ?1 AND deleted_at IS NULL",
+        params![image_id],
+        |row| row.get(0),
+    ).map_err(|_| AppError::NotFound("Image not found".into()))?;
+
+    if owner_id != user.user_id && !user.is_admin() {
+        return Err(AppError::Forbidden("Not your image".into()));
+    }
+
+    conn.execute(
+        "UPDATE images SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        params![image_id],
+    )?;
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({ "deleted": true })))
+}
+
+pub async fn restore_image(
+    db: web::Data<Database>,
+    user: AuthUser,
+    path: web::Path<i64>,
+) -> Result<HttpResponse, AppError> {
+    let image_id = path.into_inner();
+    let conn = db.conn.lock().unwrap();
+
+    let owner_id: i64 = conn.query_row(
+        "SELECT owner_id FROM images WHERE id = ?1 AND deleted_at IS NOT NULL",
+        params![image_id],
+        |row| row.get(0),
+    ).map_err(|_| AppError::NotFound("Image not found in trash".into()))?;
+
+    if owner_id != user.user_id && !user.is_admin() {
+        return Err(AppError::Forbidden("Not your image".into()));
+    }
+
+    conn.execute(
+        "UPDATE images SET deleted_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        params![image_id],
+    )?;
+
+    let image: Image = conn.query_row(
+        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
+        params![image_id],
+        row_to_image,
+    )?;
+
+    Ok(HttpResponse::Ok().json(image.to_info()))
+}
+
+pub async fn permanent_delete(
+    db: web::Data<Database>,
     config: web::Data<Config>,
     user: AuthUser,
     path: web::Path<i64>,
@@ -224,10 +291,10 @@ pub async fn delete_image(
     let conn = db.conn.lock().unwrap();
 
     let image: Image = conn.query_row(
-        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
+        &format!("SELECT {} FROM images WHERE id = ?1 AND deleted_at IS NOT NULL", IMG_COLS),
         params![image_id],
         row_to_image,
-    ).map_err(|_| AppError::NotFound("Image not found".into()))?;
+    ).map_err(|_| AppError::NotFound("Image not found in trash".into()))?;
 
     if image.owner_id != user.user_id && !user.is_admin() {
         return Err(AppError::Forbidden("Not your image".into()));
@@ -250,6 +317,45 @@ pub async fn delete_image(
     Ok(HttpResponse::Ok().json(serde_json::json!({ "deleted": true })))
 }
 
+pub async fn empty_trash(
+    db: web::Data<Database>,
+    config: web::Data<Config>,
+    user: AuthUser,
+) -> Result<HttpResponse, AppError> {
+    let conn = db.conn.lock().unwrap();
+    let storage = StorageService::new(&config.storage_path);
+
+    let sql = format!("SELECT {} FROM images WHERE owner_id = ?1 AND deleted_at IS NOT NULL", IMG_COLS);
+    let mut stmt = conn.prepare(&sql)?;
+    let images: Vec<Image> = stmt.query_map(params![user.user_id], row_to_image)?
+        .filter_map(|r| r.ok())
+        .collect();
+    drop(stmt);
+
+    for img in &images {
+        storage.delete_file(img.owner_id, &img.filename)?;
+        let user_dir = storage.get_user_path(img.owner_id);
+        let stem = std::path::Path::new(&img.filename)
+            .file_stem().and_then(|s| s.to_str()).unwrap_or("");
+        let ext = std::path::Path::new(&img.filename)
+            .extension().and_then(|s| s.to_str()).unwrap_or("jpg");
+        let thumb_path = format!("{}/{}_thumb.{}", user_dir, stem, ext);
+        let _ = std::fs::remove_file(&thumb_path);
+    }
+
+    let ids: Vec<i64> = images.iter().map(|i| i.id).collect();
+    for id in &ids {
+        conn.execute("DELETE FROM share_links WHERE image_id = ?1", params![id])?;
+    }
+
+    conn.execute(
+        "DELETE FROM images WHERE owner_id = ?1 AND deleted_at IS NOT NULL",
+        params![user.user_id],
+    )?;
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({ "deleted": images.len() })))
+}
+
 pub async fn update_image(
     db: web::Data<Database>,
     user: AuthUser,
@@ -260,7 +366,7 @@ pub async fn update_image(
     let conn = db.conn.lock().unwrap();
 
     let mut image: Image = conn.query_row(
-        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
+        &format!("SELECT {} FROM images WHERE id = ?1 AND deleted_at IS NULL", IMG_COLS),
         params![image_id],
         row_to_image,
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;
@@ -351,7 +457,7 @@ pub async fn move_image(
     let conn = db.conn.lock().unwrap();
 
     let owner_id: i64 = conn.query_row(
-        "SELECT owner_id FROM images WHERE id = ?1",
+        "SELECT owner_id FROM images WHERE id = ?1 AND deleted_at IS NULL",
         params![image_id],
         |row| row.get(0),
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;

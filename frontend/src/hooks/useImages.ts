@@ -11,18 +11,20 @@ export function useImages(folderId: number | null) {
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC')
   const [mimeType, setMimeType] = useState('')
   const [favoriteFilter, setFavoriteFilter] = useState(false)
+  const [trashedFilter, setTrashedFilter] = useState(false)
 
   const fetchImages = useCallback(async () => {
     setLoading(true)
     try {
       const params: Record<string, string | number> = {}
-      if (folderId) params.folder_id = folderId
+      if (folderId && !trashedFilter) params.folder_id = folderId
       if (search) params.search = search
       if (tags) params.tags = tags
       if (sortBy) params.sort = sortBy
       if (sortOrder) params.order = sortOrder
       if (mimeType) params.mime_type = mimeType
       if (favoriteFilter) params.favorite = 'true'
+      if (trashedFilter) params.trashed = 'true'
       const res = await imagesApi.listImages(params as any)
       setImages(res.data)
     } catch (e) {
@@ -30,7 +32,7 @@ export function useImages(folderId: number | null) {
     } finally {
       setLoading(false)
     }
-  }, [folderId, search, tags, sortBy, sortOrder, mimeType, favoriteFilter])
+  }, [folderId, search, tags, sortBy, sortOrder, mimeType, favoriteFilter, trashedFilter])
 
   useEffect(() => {
     fetchImages()
@@ -57,6 +59,7 @@ export function useImages(folderId: number | null) {
     sortBy, setSortBy, sortOrder, setSortOrder,
     mimeType, setMimeType,
     favoriteFilter, setFavoriteFilter,
+    trashedFilter, setTrashedFilter,
     upload, remove, rename, refresh: fetchImages,
   }
 }

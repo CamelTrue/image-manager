@@ -13,6 +13,8 @@ interface Props {
   onTogglePrivate?: (id: number, current: boolean) => void
   favoriteFilter?: boolean
   onFavoritesClick?: () => void
+  trashedFilter?: boolean
+  onTrashClick?: () => void
 }
 
 function FolderNode({ folder, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate, depth = 0 }: {
@@ -179,7 +181,7 @@ function FolderNode({ folder, selectedId, onSelect, onCreate, onDelete, onRename
   )
 }
 
-export default function FolderTree({ folders, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate, favoriteFilter, onFavoritesClick }: Props) {
+export default function FolderTree({ folders, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate, favoriteFilter, onFavoritesClick, trashedFilter, onTrashClick }: Props) {
   const [newRootName, setNewRootName] = useState('')
   const [creatingRoot, setCreatingRoot] = useState(false)
 
@@ -231,6 +233,18 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
         >
           <Heart size={12} className={favoriteFilter ? 'text-accent-400' : 'text-zinc-500'} />
           <span className="font-medium">Preferiti</span>
+        </div>
+
+        <div
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors text-[11px] ${
+            trashedFilter
+              ? 'bg-accent-500/15 text-accent-400'
+              : 'text-zinc-400 hover:bg-dark-700/40 hover:text-zinc-200'
+          }`}
+          onClick={() => onTrashClick?.()}
+        >
+          <Trash2 size={12} className={trashedFilter ? 'text-accent-400' : 'text-zinc-500'} />
+          <span className="font-medium">Cestino</span>
         </div>
 
         {creatingRoot && (
