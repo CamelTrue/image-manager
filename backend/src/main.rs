@@ -50,11 +50,27 @@ async fn main() -> std::io::Result<()> {
             // Image routes
             .route("/api/images", web::get().to(handlers::images::list_images))
             .route("/api/images/upload", web::post().to(handlers::images::upload_image))
+            .route("/api/images/download-zip", web::post().to(handlers::zip::download_zip))
             .route("/api/images/{id}", web::get().to(handlers::images::get_image))
             .route("/api/images/{id}/download", web::get().to(handlers::images::download_image))
             .route("/api/images/{id}", web::put().to(handlers::images::update_image))
             .route("/api/images/{id}", web::delete().to(handlers::images::delete_image))
             .route("/api/images/{id}/move", web::put().to(handlers::images::move_image))
+            .route("/api/images/{id}/thumbnail", web::get().to(handlers::thumbnails::get_thumbnail))
+            .route("/api/images/{id}/rotate", web::post().to(handlers::rotate::rotate_image))
+            .route("/api/images/{id}/tags", web::put().to(handlers::tags::set_tags))
+            .route("/api/images/{id}/share", web::post().to(handlers::share::create_share))
+            .route("/api/images/{id}/shares", web::get().to(handlers::share::list_shares))
+            // Tag routes
+            .route("/api/tags", web::get().to(handlers::tags::list_tags))
+            // Share routes
+            .route("/api/share/{token}/download", web::get().to(handlers::share::download_share))
+            .route("/api/share/{token}", web::get().to(handlers::share::get_share))
+            .route("/api/share/{token}", web::delete().to(handlers::share::delete_share))
+            // Profile routes
+            .route("/api/profile", web::get().to(handlers::profile::get_profile))
+            .route("/api/profile", web::put().to(handlers::profile::update_email))
+            .route("/api/profile/password", web::put().to(handlers::profile::change_password))
             // Folder routes
             .route("/api/folders", web::get().to(handlers::folders::list_folders))
             .route("/api/folders", web::post().to(handlers::folders::create_folder))

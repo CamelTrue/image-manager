@@ -6,21 +6,29 @@ export function useImages(folderId: number | null) {
   const [images, setImages] = useState<ImageInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [tags, setTags] = useState('')
+  const [sortBy, setSortBy] = useState('created_at')
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC')
+  const [mimeType, setMimeType] = useState('')
 
   const fetchImages = useCallback(async () => {
     setLoading(true)
     try {
-      const params: { folder_id?: number; search?: string } = {}
+      const params: Record<string, string | number> = {}
       if (folderId) params.folder_id = folderId
       if (search) params.search = search
-      const res = await imagesApi.listImages(params)
+      if (tags) params.tags = tags
+      if (sortBy) params.sort = sortBy
+      if (sortOrder) params.order = sortOrder
+      if (mimeType) params.mime_type = mimeType
+      const res = await imagesApi.listImages(params as any)
       setImages(res.data)
     } catch (e) {
       console.error('Failed to fetch images', e)
     } finally {
       setLoading(false)
     }
-  }, [folderId, search])
+  }, [folderId, search, tags, sortBy, sortOrder, mimeType])
 
   useEffect(() => {
     fetchImages()
@@ -41,5 +49,11 @@ export function useImages(folderId: number | null) {
     fetchImages()
   }
 
-  return { images, loading, search, setSearch, upload, remove, rename, refresh: fetchImages }
+  return {
+    images, loading, search, setSearch,
+    tags, setTags,
+    sortBy, setSortBy, sortOrder, setSortOrder,
+    mimeType, setMimeType,
+    upload, remove, rename, refresh: fetchImages,
+  }
 }

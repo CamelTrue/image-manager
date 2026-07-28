@@ -12,19 +12,11 @@ pub async fn list_folders(
 ) -> Result<HttpResponse, AppError> {
     let conn = db.conn.lock().unwrap();
     let mut stmt = conn.prepare(
-        "SELECT id, name, parent_id, owner_id, created_at FROM folders WHERE owner_id = ?1 ORDER BY name"
+        "SELECT id, name, parent_id, owner_id, is_private, created_at FROM folders WHERE owner_id = ?1 ORDER BY name"
     )?;
-
-    let folders: Vec<Folder> = stmt.query_map(params![user.user_id], |row| {
-        Ok(Folder {
-            id: row.get(0)?,
-            name: row.get(1)?,
-            parent_id: row.get(2)?,
-            owner_id: row.get(3)?,
-            created_at: row.get(4)?,
-        })
-    })?.filter_map(|r| r.ok()).collect();
-
+    let folders: Vec<Folder> = stmt.query_map(params![user.user_id], folder_row)?
+        .filter_map(|r| r.ok())
+        .collect();
     let tree = build_tree(&folders, None);
     Ok(HttpResponse::Ok().json(tree))
 }
@@ -38,11 +30,12 @@ pub async fn create_folder(
         return Err(AppError::BadRequest("Folder name cannot be empty".into()));
     }
 
+    let is_private = body.is_private.unwrap_or(false);
     let conn = db.conn.lock().unwrap();
 
     let result = conn.execute(
-        "INSERT INTO folders (name, parent_id, owner_id) VALUES (?1, ?2, ?3)",
-        params![body.name, body.parent_id, user.user_id],
+        "INSERT INTO folders (name, parent_id, owner_id, is_private) VALUES (?1, ?2, ?3, ?4)",
+        params![body.name, body.parent_id, user.user_id, is_private as i64],
     );
 
     match result {
@@ -53,6 +46,7 @@ pub async fn create_folder(
                 name: body.name.clone(),
                 parent_id: body.parent_id,
                 owner_id: user.user_id,
+                is_private,
                 created_at: chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
             };
             Ok(HttpResponse::Created().json(folder))
@@ -73,15 +67,9 @@ pub async fn get_folder(
     let conn = db.conn.lock().unwrap();
 
     let folder: Folder = conn.query_row(
-        "SELECT id, name, parent_id, owner_id, created_at FROM folders WHERE id = ?1 AND owner_id = ?2",
+        "SELECT id, name, parent_id, owner_id, is_private, created_at FROM folders WHERE id = ?1 AND owner_id = ?2",
         params![folder_id, user.user_id],
-        |row| Ok(Folder {
-            id: row.get(0)?,
-            name: row.get(1)?,
-            parent_id: row.get(2)?,
-            owner_id: row.get(3)?,
-            created_at: row.get(4)?,
-        }),
+        folder_row,
     ).map_err(|_| AppError::NotFound("Folder not found".into()))?;
 
     Ok(HttpResponse::Ok().json(folder))
@@ -94,16 +82,29 @@ pub async fn update_folder(
     body: web::Json<UpdateFolderRequest>,
 ) -> Result<HttpResponse, AppError> {
     let folder_id = path.into_inner();
-
-    if body.name.is_empty() {
-        return Err(AppError::BadRequest("Folder name cannot be empty".into()));
-    }
-
     let conn = db.conn.lock().unwrap();
 
-    let rows = conn.execute(
-        "UPDATE folders SET name = ?1 WHERE id = ?2 AND owner_id = ?3",
-        params![body.name, folder_id, user.user_id],
+    if let Some(ref name) = body.name {
+        if name.is_empty() {
+            return Err(AppError::BadRequest("Folder name cannot be empty".into()));
+        }
+        conn.execute(
+            "UPDATE folders SET name = ?1 WHERE id = ?2 AND owner_id = ?3",
+            params![name, folder_id, user.user_id],
+        )?;
+    }
+
+    if let Some(is_private) = body.is_private {
+        conn.execute(
+            "UPDATE folders SET is_private = ?1 WHERE id = ?2 AND owner_id = ?3",
+            params![is_private as i64, folder_id, user.user_id],
+        )?;
+    }
+
+    let rows: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM folders WHERE id = ?1 AND owner_id = ?2",
+        params![folder_id, user.user_id],
+        |row| row.get(0),
     )?;
 
     if rows == 0 {
@@ -133,6 +134,17 @@ pub async fn delete_folder(
     Ok(HttpResponse::Ok().json(serde_json::json!({ "deleted": true })))
 }
 
+fn folder_row(row: &rusqlite::Row) -> rusqlite::Result<Folder> {
+    Ok(Folder {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        parent_id: row.get(2)?,
+        owner_id: row.get(3)?,
+        is_private: row.get::<_, i64>(4)? != 0,
+        created_at: row.get(5)?,
+    })
+}
+
 fn build_tree(folders: &[Folder], parent_id: Option<i64>) -> Vec<FolderTree> {
     folders
         .iter()
@@ -141,6 +153,7 @@ fn build_tree(folders: &[Folder], parent_id: Option<i64>) -> Vec<FolderTree> {
             id: f.id,
             name: f.name.clone(),
             parent_id: f.parent_id,
+            is_private: f.is_private,
             children: build_tree(folders, Some(f.id)),
         })
         .collect()

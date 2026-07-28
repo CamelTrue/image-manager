@@ -32,15 +32,33 @@ pub fn run_migrations(db: &Database) -> Result<()> {
             folder_id   INTEGER REFERENCES folders(id) ON DELETE SET NULL,
             owner_id    INTEGER NOT NULL REFERENCES users(id),
             tags        TEXT DEFAULT '[]',
+            width       INTEGER DEFAULT 0,
+            height      INTEGER DEFAULT 0,
             created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS share_links (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            image_id    INTEGER NOT NULL REFERENCES images(id) ON DELETE CASCADE,
+            token       TEXT UNIQUE NOT NULL,
+            owner_id    INTEGER NOT NULL REFERENCES users(id),
+            created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at  DATETIME
         );
 
         CREATE INDEX IF NOT EXISTS idx_images_owner ON images(owner_id);
         CREATE INDEX IF NOT EXISTS idx_images_folder ON images(folder_id);
         CREATE INDEX IF NOT EXISTS idx_folders_parent ON folders(parent_id);
-        CREATE INDEX IF NOT EXISTS idx_folders_owner ON folders(owner_id);"
+        CREATE INDEX IF NOT EXISTS idx_folders_owner ON folders(owner_id);
+        CREATE INDEX IF NOT EXISTS idx_share_token ON share_links(token);
+        CREATE INDEX IF NOT EXISTS idx_share_image ON share_links(image_id);"
     )?;
+
+    // Add columns if they don't exist (safe for existing DBs)
+    let _ = conn.execute_batch("ALTER TABLE images ADD COLUMN width INTEGER DEFAULT 0");
+    let _ = conn.execute_batch("ALTER TABLE images ADD COLUMN height INTEGER DEFAULT 0");
+    let _ = conn.execute_batch("ALTER TABLE folders ADD COLUMN is_private INTEGER DEFAULT 0");
 
     let admin_exists: bool = conn.query_row(
         "SELECT COUNT(*) > 0 FROM users WHERE role = 'admin'",

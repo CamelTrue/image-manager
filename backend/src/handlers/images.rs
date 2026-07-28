@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse};
+﻿use actix_web::{web, HttpResponse};
 use actix_multipart::Multipart;
 use futures_util::StreamExt;
 use rusqlite::params;
@@ -9,6 +9,26 @@ use crate::errors::AppError;
 use crate::middleware::auth::AuthUser;
 use crate::models::image::*;
 use crate::services::storage::StorageService;
+use image::GenericImageView;
+
+const IMG_COLS: &str = "id, filename, original, mime_type, size, folder_id, owner_id, tags, width, height, created_at, updated_at";
+
+fn row_to_image(row: &rusqlite::Row) -> rusqlite::Result<Image> {
+    Ok(Image {
+        id: row.get(0)?,
+        filename: row.get(1)?,
+        original: row.get(2)?,
+        mime_type: row.get(3)?,
+        size: row.get(4)?,
+        folder_id: row.get(5)?,
+        owner_id: row.get(6)?,
+        tags: row.get(7)?,
+        width: row.get(8)?,
+        height: row.get(9)?,
+        created_at: row.get(10)?,
+        updated_at: row.get(11)?,
+    })
+}
 
 pub async fn list_images(
     db: web::Data<Database>,
@@ -19,8 +39,13 @@ pub async fn list_images(
     let folder_id = query.get("folder_id").and_then(|v| v.parse::<i64>().ok());
     let search = query.get("search").cloned();
     let tags = query.get("tags").cloned();
+    let sort = query.get("sort").cloned().unwrap_or_else(|| "created_at".to_string());
+    let order = query.get("order").cloned().unwrap_or_else(|| "DESC".to_string());
+    let mime_type = query.get("mime_type").cloned();
+    let min_size = query.get("min_size").and_then(|v| v.parse::<i64>().ok());
+    let max_size = query.get("max_size").and_then(|v| v.parse::<i64>().ok());
 
-    let mut sql = String::from("SELECT id, filename, original, mime_type, size, folder_id, owner_id, tags, created_at, updated_at FROM images WHERE owner_id = ?1");
+    let mut sql = format!("SELECT {} FROM images WHERE owner_id = ?1", IMG_COLS);
     let mut param_values: Vec<Box<dyn rusqlite::types::ToSql>> = vec![Box::new(user.user_id)];
 
     if let Some(fid) = folder_id {
@@ -38,26 +63,33 @@ pub async fn list_images(
         param_values.push(Box::new(format!("%{}%", t)));
     }
 
-    sql.push_str(" ORDER BY created_at DESC");
+    if let Some(ref m) = mime_type {
+        sql.push_str(&format!(" AND mime_type LIKE ?{}", param_values.len() + 1));
+        param_values.push(Box::new(format!("{}%", m)));
+    }
+
+    if let Some(ms) = min_size {
+        sql.push_str(&format!(" AND size >= ?{}", param_values.len() + 1));
+        param_values.push(Box::new(ms));
+    }
+
+    if let Some(ms) = max_size {
+        sql.push_str(&format!(" AND size <= ?{}", param_values.len() + 1));
+        param_values.push(Box::new(ms));
+    }
+
+    let valid_sorts = ["created_at", "original", "size", "updated_at"];
+    let sort_col = if valid_sorts.contains(&sort.as_str()) { sort } else { "created_at".to_string() };
+    let sort_dir = if order.to_uppercase() == "ASC" { "ASC" } else { "DESC" };
+    sql.push_str(&format!(" ORDER BY {} {}", sort_col, sort_dir));
 
     let mut stmt = conn.prepare(&sql)?;
     let params_refs: Vec<&dyn rusqlite::types::ToSql> = param_values.iter().map(|p| p.as_ref()).collect();
 
-    let images: Vec<ImageInfo> = stmt.query_map(params_refs.as_slice(), |row| {
-        let img = Image {
-            id: row.get(0)?,
-            filename: row.get(1)?,
-            original: row.get(2)?,
-            mime_type: row.get(3)?,
-            size: row.get(4)?,
-            folder_id: row.get(5)?,
-            owner_id: row.get(6)?,
-            tags: row.get(7)?,
-            created_at: row.get(8)?,
-            updated_at: row.get(9)?,
-        };
-        Ok(img.to_info())
-    })?.filter_map(|r| r.ok()).collect();
+    let images: Vec<ImageInfo> = stmt.query_map(params_refs.as_slice(), row_to_image)?
+        .filter_map(|r| r.ok())
+        .map(|img| img.to_info())
+        .collect();
 
     Ok(HttpResponse::Ok().json(images))
 }
@@ -83,7 +115,7 @@ pub async fn upload_image(
 
             if field_name == "file" {
                 original_name = cd.get_filename().map(|s| s.to_string());
-            mime = field.content_type().map(|m| m.to_string());
+                mime = field.content_type().map(|m| m.to_string());
                 let mut data = Vec::new();
                 while let Some(chunk) = field.next().await {
                     let chunk = chunk.map_err(|e| AppError::BadRequest(e.to_string()))?;
@@ -98,31 +130,28 @@ pub async fn upload_image(
     let original_name = original_name.ok_or_else(|| AppError::BadRequest("No filename".into()))?;
     let mime = mime.unwrap_or_else(|| "application/octet-stream".to_string());
 
+    let (width, height) = match image::load_from_memory(&file_data) {
+        Ok(img) => {
+            let (w, h) = img.dimensions();
+            (w as i64, h as i64)
+        }
+        Err(_) => (0, 0),
+    };
+
     let filename = StorageService::generate_filename(&original_name);
     storage.save_file(user.user_id, &filename, &file_data)?;
 
     let conn = db.conn.lock().unwrap();
     conn.execute(
-        "INSERT INTO images (filename, original, mime_type, size, folder_id, owner_id) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![filename, original_name, mime, file_data.len() as i64, folder_id, user.user_id],
+        "INSERT INTO images (filename, original, mime_type, size, folder_id, owner_id, width, height) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        params![filename, original_name, mime, file_data.len() as i64, folder_id, user.user_id, width, height],
     )?;
 
     let image_id = conn.last_insert_rowid();
     let image: Image = conn.query_row(
-        "SELECT id, filename, original, mime_type, size, folder_id, owner_id, tags, created_at, updated_at FROM images WHERE id = ?1",
+        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
         params![image_id],
-        |row| Ok(Image {
-            id: row.get(0)?,
-            filename: row.get(1)?,
-            original: row.get(2)?,
-            mime_type: row.get(3)?,
-            size: row.get(4)?,
-            folder_id: row.get(5)?,
-            owner_id: row.get(6)?,
-            tags: row.get(7)?,
-            created_at: row.get(8)?,
-            updated_at: row.get(9)?,
-        }),
+        row_to_image,
     )?;
 
     Ok(HttpResponse::Created().json(image.to_info()))
@@ -137,20 +166,9 @@ pub async fn get_image(
     let conn = db.conn.lock().unwrap();
 
     let image: Image = conn.query_row(
-        "SELECT id, filename, original, mime_type, size, folder_id, owner_id, tags, created_at, updated_at FROM images WHERE id = ?1",
+        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
         params![image_id],
-        |row| Ok(Image {
-            id: row.get(0)?,
-            filename: row.get(1)?,
-            original: row.get(2)?,
-            mime_type: row.get(3)?,
-            size: row.get(4)?,
-            folder_id: row.get(5)?,
-            owner_id: row.get(6)?,
-            tags: row.get(7)?,
-            created_at: row.get(8)?,
-            updated_at: row.get(9)?,
-        }),
+        row_to_image,
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;
 
     if image.owner_id != user.user_id && !user.is_admin() {
@@ -170,20 +188,9 @@ pub async fn download_image(
     let conn = db.conn.lock().unwrap();
 
     let image: Image = conn.query_row(
-        "SELECT id, filename, original, mime_type, size, folder_id, owner_id, tags, created_at, updated_at FROM images WHERE id = ?1",
+        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
         params![image_id],
-        |row| Ok(Image {
-            id: row.get(0)?,
-            filename: row.get(1)?,
-            original: row.get(2)?,
-            mime_type: row.get(3)?,
-            size: row.get(4)?,
-            folder_id: row.get(5)?,
-            owner_id: row.get(6)?,
-            tags: row.get(7)?,
-            created_at: row.get(8)?,
-            updated_at: row.get(9)?,
-        }),
+        row_to_image,
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;
 
     if image.owner_id != user.user_id && !user.is_admin() {
@@ -209,20 +216,9 @@ pub async fn delete_image(
     let conn = db.conn.lock().unwrap();
 
     let image: Image = conn.query_row(
-        "SELECT id, filename, original, mime_type, size, folder_id, owner_id, tags, created_at, updated_at FROM images WHERE id = ?1",
+        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
         params![image_id],
-        |row| Ok(Image {
-            id: row.get(0)?,
-            filename: row.get(1)?,
-            original: row.get(2)?,
-            mime_type: row.get(3)?,
-            size: row.get(4)?,
-            folder_id: row.get(5)?,
-            owner_id: row.get(6)?,
-            tags: row.get(7)?,
-            created_at: row.get(8)?,
-            updated_at: row.get(9)?,
-        }),
+        row_to_image,
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;
 
     if image.owner_id != user.user_id && !user.is_admin() {
@@ -232,6 +228,15 @@ pub async fn delete_image(
     let storage = StorageService::new(&config.storage_path);
     storage.delete_file(image.owner_id, &image.filename)?;
 
+    let user_dir = storage.get_user_path(image.owner_id);
+    let stem = std::path::Path::new(&image.filename)
+        .file_stem().and_then(|s| s.to_str()).unwrap_or("");
+    let ext = std::path::Path::new(&image.filename)
+        .extension().and_then(|s| s.to_str()).unwrap_or("jpg");
+    let thumb_path = format!("{}/{}_thumb.{}", user_dir, stem, ext);
+    let _ = std::fs::remove_file(&thumb_path);
+
+    conn.execute("DELETE FROM share_links WHERE image_id = ?1", params![image_id])?;
     conn.execute("DELETE FROM images WHERE id = ?1", params![image_id])?;
 
     Ok(HttpResponse::Ok().json(serde_json::json!({ "deleted": true })))
@@ -239,7 +244,6 @@ pub async fn delete_image(
 
 pub async fn update_image(
     db: web::Data<Database>,
-    config: web::Data<Config>,
     user: AuthUser,
     path: web::Path<i64>,
     body: web::Json<UpdateImageRequest>,
@@ -248,20 +252,9 @@ pub async fn update_image(
     let conn = db.conn.lock().unwrap();
 
     let mut image: Image = conn.query_row(
-        "SELECT id, filename, original, mime_type, size, folder_id, owner_id, tags, created_at, updated_at FROM images WHERE id = ?1",
+        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
         params![image_id],
-        |row| Ok(Image {
-            id: row.get(0)?,
-            filename: row.get(1)?,
-            original: row.get(2)?,
-            mime_type: row.get(3)?,
-            size: row.get(4)?,
-            folder_id: row.get(5)?,
-            owner_id: row.get(6)?,
-            tags: row.get(7)?,
-            created_at: row.get(8)?,
-            updated_at: row.get(9)?,
-        }),
+        row_to_image,
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;
 
     if image.owner_id != user.user_id && !user.is_admin() {
@@ -269,7 +262,7 @@ pub async fn update_image(
     }
 
     if let Some(ref new_name) = body.original {
-        let storage = StorageService::new(&config.storage_path);
+        let storage = StorageService::new(&crate::config::Config::from_env().storage_path);
         let ext = std::path::Path::new(new_name)
             .extension()
             .and_then(|e| e.to_str())

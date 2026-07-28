@@ -36,11 +36,24 @@ impl FromRequest for AuthUser {
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
         let config = req.app_data::<web::Data<Config>>().cloned();
 
-        let token = req
+        let header_token = req
             .headers()
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.strip_prefix("Bearer "));
+
+        let query_token = req
+            .query_string()
+            .split('&')
+            .filter_map(|pair| {
+                let mut parts = pair.splitn(2, '=');
+                let key = parts.next()?;
+                let val = parts.next()?;
+                if key == "token" { Some(val) } else { None }
+            })
+            .next();
+
+        let token = header_token.or(query_token);
 
         let result = match (config, token) {
             (Some(config), Some(token)) => {

@@ -10,6 +10,8 @@ pub struct Image {
     pub folder_id: Option<i64>,
     pub owner_id: i64,
     pub tags: String,
+    pub width: i64,
+    pub height: i64,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -23,6 +25,8 @@ pub struct ImageInfo {
     pub folder_id: Option<i64>,
     pub owner_id: i64,
     pub tags: String,
+    pub width: i64,
+    pub height: i64,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -37,6 +41,8 @@ impl Image {
             folder_id: self.folder_id,
             owner_id: self.owner_id,
             tags: self.tags.clone(),
+            width: self.width,
+            height: self.height,
             created_at: self.created_at.clone(),
             updated_at: self.updated_at.clone(),
         }

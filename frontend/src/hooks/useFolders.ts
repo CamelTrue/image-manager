@@ -22,13 +22,13 @@ export function useFolders() {
     fetchFolders()
   }, [fetchFolders])
 
-  const create = async (name: string, parentId: number | null) => {
-    await foldersApi.createFolder(name, parentId)
+  const create = async (name: string, parentId: number | null, isPrivate = false) => {
+    await foldersApi.createFolder(name, parentId, isPrivate)
     fetchFolders()
   }
 
   const rename = async (id: number, name: string) => {
-    await foldersApi.updateFolder(id, name)
+    await foldersApi.updateFolder(id, { name })
     fetchFolders()
   }
 
@@ -37,5 +37,10 @@ export function useFolders() {
     fetchFolders()
   }
 
-  return { folders, loading, create, rename, remove, refresh: fetchFolders }
+  const togglePrivate = async (id: number, current: boolean) => {
+    await foldersApi.updateFolder(id, { is_private: !current })
+    fetchFolders()
+  }
+
+  return { folders, loading, create, rename, remove, refresh: fetchFolders, togglePrivate }
 }

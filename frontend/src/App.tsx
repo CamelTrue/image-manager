@@ -6,6 +6,7 @@ import Layout from './components/Layout/Layout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import AdminPage from './pages/AdminPage'
+import ProfilePage from './pages/ProfilePage'
 
 export default function App() {
   const { loadUser, isAuthenticated } = useAuthStore()
@@ -26,6 +27,7 @@ export default function App() {
           }
         >
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route
             path="/admin"
             element={

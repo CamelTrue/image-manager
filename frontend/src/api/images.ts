@@ -1,7 +1,7 @@
 import api from './client'
 import type { ImageInfo } from '../types'
 
-export const listImages = (params: { folder_id?: number; search?: string; tags?: string }) =>
+export const listImages = (params: { folder_id?: number; search?: string; tags?: string; mime_type?: string; min_size?: number; max_size?: number; sort?: string; order?: string }) =>
   api.get<ImageInfo[]>('/images', { params })
 
 export const getImage = (id: number) =>
@@ -28,4 +28,33 @@ export const moveImage = (id: number, folder_id: number | null) =>
 export const downloadImage = (id: number) =>
   api.get(`/images/${id}/download`, { responseType: 'blob' })
 
-export const getImageUrl = (id: number) => `/api/images/${id}/download`
+export const getImageUrl = (id: number) => {
+  const token = localStorage.getItem('access_token') || ''
+  return `/api/images/${id}/download?token=${encodeURIComponent(token)}`
+}
+
+export const getThumbnailUrl = (id: number) => {
+  const token = localStorage.getItem('access_token') || ''
+  return `/api/images/${id}/thumbnail?token=${encodeURIComponent(token)}`
+}
+
+export const rotateImage = (id: number, degrees: number) =>
+  api.post(`/images/${id}/rotate`, { degrees })
+
+export const setTags = (id: number, tags: string[]) =>
+  api.put(`/images/${id}/tags`, { tags })
+
+export const listTags = () =>
+  api.get<string[]>('/tags')
+
+export const downloadZip = (ids: number[]) =>
+  api.post('/images/download-zip', { ids }, { responseType: 'blob' })
+
+export const createShare = (imageId: number, expiresInHours?: number) =>
+  api.post<{ token: string; image_id: number; expires_at: string | null }>(`/images/${imageId}/share`, { expires_in_hours: expiresInHours })
+
+export const listShares = (imageId: number) =>
+  api.get(`/images/${imageId}/shares`)
+
+export const deleteShare = (token: string) =>
+  api.delete(`/share/${token}`)
