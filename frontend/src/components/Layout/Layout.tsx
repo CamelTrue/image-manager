@@ -117,7 +117,7 @@ export default function Layout() {
       <main className="flex-1 relative overflow-hidden">
         <div className="absolute inset-0 overflow-auto">
           <div className="min-h-full flex flex-col">
-            <div className="flex-1">
+            <div className="flex-1 pb-4 md:pb-8">
               <Outlet />
             </div>
             <footer className="min-h-[25vh] mt-[7vh] glass border-t border-dark-600/30 flex items-center justify-center shrink-0">
