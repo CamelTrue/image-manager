@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const [previewImage, setPreviewImage] = useState<ImageInfo | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [tagImage, setTagImage] = useState<ImageInfo | null>(null)
   const [revealedFolders, setRevealedFolders] = useState<Set<number>>(new Set())
@@ -251,7 +251,7 @@ export default function DashboardPage() {
       )}
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-2 px-4 md:px-6 py-3 border-b border-dark-600/30 shrink-0">
+        <div className="flex items-center gap-3 px-5 md:px-8 py-4 border-b border-dark-600/30 shrink-0">
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button
@@ -325,7 +325,7 @@ export default function DashboardPage() {
         </div>
 
         {selectionMode && (
-          <div className="flex items-center gap-3 px-6 py-2.5 bg-accent-500/10 border-b border-accent-500/20 shrink-0 animate-fade-in">
+          <div className="flex items-center gap-4 px-8 py-3 bg-accent-500/10 border-b border-accent-500/20 shrink-0 animate-fade-in">
             <span className="text-xs text-accent-400 font-medium">{selectedIds.size} selezionate</span>
             <div className="flex-1" />
             <button
@@ -351,8 +351,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="flex-1 overflow-auto px-4 md:px-6 py-4 md:py-6">
-          <div className="max-w-6xl mx-auto">
+        <div className="flex-1 overflow-auto px-6 md:px-8 lg:px-10 py-6 md:py-8">
           {trashedFilter ? (
             <>
               <div className="flex items-center gap-2 mb-4">
@@ -370,7 +369,7 @@ export default function DashboardPage() {
                 )}
               </div>
               <div className="flex justify-center">
-                <div className="grid grid-cols-5 gap-3 w-full max-w-5xl">
+                <div className="grid grid-cols-4 gap-6 w-full max-w-7xl">
                   {images.map((img) => (
                     <div key={img.id} className="group relative rounded-xl overflow-hidden bg-dark-800/40 border border-dark-600/30 shadow-sm hover:shadow-lg hover:shadow-black/20 transition-all duration-200 aspect-[4/3]">
                       <img src={getImageUrl(img.id)} alt={img.original} className="w-full h-full object-cover opacity-60" />
@@ -514,7 +513,6 @@ export default function DashboardPage() {
               )}
             </>
           )}
-          </div>
         </div>
       </div>
 
