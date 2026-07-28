@@ -269,34 +269,38 @@ export default function DashboardPage() {
             </Tooltip.Portal>
           </Tooltip.Root>
 
-          <div className="relative flex-1 max-w-sm">
+          <div className="flex items-center justify-center gap-3 flex-1">
+            <div className="relative max-w-xs w-full">
+              <input
+                type="text"
+                placeholder="Cerca..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-dark-800/60 text-white pl-3 pr-9 py-1.5 rounded-lg border border-dark-600/30 focus:border-accent-500/40 outline-none transition-colors text-xs placeholder-zinc-600"
+              />
+              <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+            </div>
+
             <input
               type="text"
-              placeholder="Cerca..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-dark-800/60 text-white pl-9 pr-3 py-1.5 rounded-lg border border-dark-600/30 focus:border-accent-500/40 outline-none transition-colors text-xs placeholder-zinc-600"
+              placeholder="Tag..."
+              value={tagsFilter}
+              onChange={(e) => setTags(e.target.value)}
+              className="hidden md:block w-28 bg-dark-800/60 text-white px-2.5 py-1.5 rounded-lg border border-dark-600/30 focus:border-accent-500/40 outline-none transition-colors text-xs placeholder-zinc-600"
             />
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+
+            <AdvancedSearch
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              mimeType={mimeType}
+              onSortByChange={setSortBy}
+              onSortOrderChange={setSortOrder}
+              onMimeTypeChange={setMimeType}
+              onReset={resetFilters}
+            />
+
+            <UploadDialog onUpload={upload} />
           </div>
-
-          <input
-            type="text"
-            placeholder="Tag..."
-            value={tagsFilter}
-            onChange={(e) => setTags(e.target.value)}
-            className="hidden md:block w-28 bg-dark-800/60 text-white px-2.5 py-1.5 rounded-lg border border-dark-600/30 focus:border-accent-500/40 outline-none transition-colors text-xs placeholder-zinc-600"
-          />
-
-          <AdvancedSearch
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            mimeType={mimeType}
-            onSortByChange={setSortBy}
-            onSortOrderChange={setSortOrder}
-            onMimeTypeChange={setMimeType}
-            onReset={resetFilters}
-          />
 
           {isAllView && visibleImages.length > 0 && (
             <Tooltip.Root>
@@ -320,8 +324,6 @@ export default function DashboardPage() {
               </Tooltip.Portal>
             </Tooltip.Root>
           )}
-
-          <UploadDialog onUpload={upload} />
         </div>
 
         {selectionMode && (
@@ -369,7 +371,7 @@ export default function DashboardPage() {
                 )}
               </div>
               <div className="flex justify-center">
-                <div className="grid grid-cols-4 gap-6 w-full max-w-7xl">
+                <div className="grid grid-cols-5 gap-5 w-full max-w-7xl">
                   {images.map((img) => (
                     <div key={img.id} className="group relative rounded-xl overflow-hidden bg-dark-800/40 border border-dark-600/30 shadow-sm hover:shadow-lg hover:shadow-black/20 transition-all duration-200 aspect-[4/3]">
                       <img src={getImageUrl(img.id)} alt={img.original} className="w-full h-full object-cover opacity-60" />

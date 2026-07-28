@@ -43,7 +43,7 @@ function FolderSection({ title, images, onDelete, onRename, onPreview, onFavorit
   onDragStart?: (id: number) => void
   onTags?: (image: ImageInfo) => void
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const selectionMode = !!onToggleSelect
 
   return (
@@ -60,7 +60,7 @@ function FolderSection({ title, images, onDelete, onRename, onPreview, onFavorit
       </button>
       {!collapsed && (
         <div className="flex justify-center">
-          <div className="grid grid-cols-4 gap-6 w-full max-w-7xl">
+          <div className="grid grid-cols-5 gap-5 w-full max-w-7xl">
             {images.map((image) => (
             <ImageCard
               key={image.id}
@@ -89,9 +89,9 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
   if (loading) {
     return (
       <div className="flex justify-center">
-        <div className="grid grid-cols-4 gap-6 w-full max-w-7xl">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="animate-shimmer rounded-xl aspect-[3/2]" />
+        <div className="grid grid-cols-5 gap-5 w-full max-w-7xl">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="animate-shimmer rounded-xl aspect-[4/3]" />
           ))}
         </div>
       </div>
@@ -163,7 +163,7 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
 
   return (
     <div className="flex justify-center">
-      <div className="grid grid-cols-4 gap-6 w-full max-w-7xl">
+      <div className="grid grid-cols-5 gap-5 w-full max-w-7xl">
         {images.map((image) => (
           <ImageCard
           key={image.id}
