@@ -1,135 +1,135 @@
 # Image Manager
 
-Gestione immagini self-hosted con interfaccia web moderna. Built con **Rust (Actix-web)** + **React (Vite/TypeScript/Tailwind CSS v4)**.
+Self-hosted image management with a modern web interface. Built with **Rust (Actix-web)** + **React (Vite/TypeScript/Tailwind CSS v4)**.
 
-## Funzionalità
+## Features
 
-- Upload drag & drop
-- Organizzazione in cartelle
-- Tag per categorizzare le immagini
-- Cartelle private (contenuto nascosto, rivelabile su richiesta)
-- Ricerca avanzata (per nome, tag, tipo file, ordinamento)
-- Anteprima con slideshow, rotazione, informazioni
-- Download singolo / ZIP multipli
-- Condivisione via link con scadenza
-- Miniature generate automaticamente
-- Temi scuro / chiaro
-- Profilo utente (statistiche, cambio email/password)
-- Pannello admin (statistiche globali)
+- Drag & drop upload
+- Folder organization
+- Tags for categorizing images
+- Private folders (content hidden by default, reveal on demand)
+- Advanced search (name, tags, MIME type, sorting)
+- Preview with slideshow, rotation, metadata
+- Single / ZIP batch download
+- Share links with optional expiration
+- Auto-generated thumbnails
+- Dark / Light theme
+- User profile (stats, email/password change)
+- Admin panel (global stats, user management)
 
-## Requisiti
+## Requirements
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows) oppure Docker Engine + Docker Compose (Linux/Mac)
-- Almeno 1 GB di RAM libera
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows) or Docker Engine + Docker Compose (Linux/Mac)
+- At least 1 GB free RAM
 
-## Installazione
+## Installation
 
-### 1. Clona il repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/CamelTrue/image-manager.git
 cd image-manager
 ```
 
-### 2. Configura (opzionale)
+### 2. Configure (optional)
 
-Crea un file `.env` nella directory principale per personalizzare le impostazioni:
+Create a `.env` file in the project root to customize settings:
 
 ```env
-JWT_SECRET=la-tua-chiave-segreta-cambiami
+JWT_SECRET=your-secret-key-change-me
 JWT_EXPIRES_IN=900
 REFRESH_EXPIRES_IN=604800
 ```
 
-Se non crei il file, viene usato il valore predefinito `change-me-in-production`. **Cambialo in produzione.**
+If you don't create the file, the default value `change-me-in-production` is used. **Change it in production.**
 
-### 3. Crea le directory per i dati
+### 3. Create data directories
 
 ```bash
 mkdir -p data
 ```
 
-Le immagini vengono salvate in `E:/images` su Windows (modifica il path in `docker-compose.yml` se necessario).  
-Il database SQLite viene salvato in `data/`.
+Images are stored at `E:/images` on Windows (edit the path in `docker-compose.yml` if needed).  
+The SQLite database is stored in `data/`.
 
-### 4. Avvia
+### 4. Start
 
 ```bash
 docker compose up --build -d
 ```
 
-### 5. Accedi
+### 5. Access
 
-Apri il browser su **http://localhost:3000**
+Open your browser at **http://localhost:3000**
 
-- **Utente:** `admin`
+- **Username:** `admin`
 - **Password:** `admin`
 
-## Utilizzo
+## Usage
 
 ### Upload
-Trascina le immagini nella finestra o clicca sul pulsante `+` nella toolbar.
+Drag images into the window or click the `+` button in the toolbar.
 
-### Cartelle
-- **Crea**: clicca `+` nell'header della sidebar "Cartelle"
-- **Sottocartelle**: clicca `+` al passaggio del mouse su una cartella
-- **Rinomina**: clicca l'icona matita
-- **Elimina**: clicca l'icona cestino
-- **Rendi privata**: clicca l'icona lucchetto nel menu hover
-- Le cartelle private mostrano il lucchetto; cliccando sulla cartella, il contenuto è nascosto finché non premi "Mostra contenuti"
+### Folders
+- **Create**: click `+` in the sidebar "Folders" header
+- **Sub-folders**: click `+` on folder hover
+- **Rename**: click the edit icon
+- **Delete**: click the trash icon
+- **Make private**: click the lock icon in the hover menu
+- Private folders show a lock icon; clicking such a folder hides its contents until you press "Show contents"
 
-### Tag
-- Aggiungi tag dal pulsante `#` su ogni immagine
-- Filtra per tag dal campo "Tag..." nella toolbar
+### Tags
+- Add tags from the `#` button on each image
+- Filter by tag from the "Tags..." field in the toolbar
 
-### Ricerca avanzata
-Clicca l'icona filtro nella toolbar per ordinare per data/nome/dimensione e filtrare per tipo MIME.
+### Advanced search
+Click the filter icon in the toolbar to sort by date/name/size and filter by MIME type.
 
-### Selezione multipla
-- In vista "Tutte": seleziona le immagini con le checkbox
-- Clicca l'icona checkbox nella toolbar per selezionare/deselezionare tutto
-- Azioni bulk: Scarica ZIP o Elimina
+### Multi-select
+- In "All" view: select images using checkboxes
+- Click the checkbox icon in the toolbar to select/deselect all
+- Bulk actions: Download ZIP or Delete
 
-### Condivisione
-Apri un'immagine e usa il pulsante Condividi per generare un link pubblico con scadenza opzionale.
+### Sharing
+Open an image and use the Share button to generate a public link with optional expiration date.
 
-## Comandi utili
+## Useful commands
 
 ```bash
-# Avviare in background
+# Start in background
 docker compose up --build -d
 
-# Fermare
+# Stop
 docker compose down
 
-# Vedere i log
+# View logs
 docker compose logs -f
 
-# Ricostruire dopo modifiche
+# Rebuild after changes
 docker compose up --build -d
 ```
 
-## Architettura
+## Architecture
 
 ```
 image-manager/
 ├── backend/                # Rust + Actix-web
 │   ├── src/
 │   │   ├── main.rs         # Entry point, routes
-│   │   ├── config.rs       # Configurazione da env
-│   │   ├── db/             # Database SQLite + migrazioni
-│   │   ├── handlers/       # Endpoint API
-│   │   ├── middleware/      # Auth JWT
-│   │   ├── models/         # Struct dei dati
-│   │   └── services/       # Storage su filesystem
+│   │   ├── config.rs       # Environment-based config
+│   │   ├── db/             # SQLite database + migrations
+│   │   ├── handlers/       # API endpoints
+│   │   ├── middleware/      # JWT auth
+│   │   ├── models/         # Data structs
+│   │   └── services/       # Filesystem storage
 │   └── Dockerfile
 ├── frontend/               # React + Vite + TypeScript
 │   ├── src/
-│   │   ├── api/            # Chiamate API
-│   │   ├── components/     # Componenti UI
+│   │   ├── api/            # API calls
+│   │   ├── components/     # UI components
 │   │   ├── hooks/          # React hooks
-│   │   ├── pages/          # Pagine
-│   │   ├── store/          # Stato globale (Zustand)
+│   │   ├── pages/          # Pages
+│   │   ├── store/          # Global state (Zustand)
 │   │   └── types/          # TypeScript types
 │   └── Dockerfile
 ├── docker-compose.yml
@@ -138,14 +138,14 @@ image-manager/
 
 ## API
 
-Il backend espone API REST su `http://localhost:8080/api/`:
+The backend exposes REST APIs at `http://localhost:8080/api/`:
 - `/auth` — login, refresh
-- `/images` — CRUD, upload, rotazione, tag, thumbnail, ZIP
-- `/folders` — CRUD cartelle, toggle privacy
-- `/share` — link di condivisione
-- `/profile` — profilo utente
-- `/admin` — statistiche, gestione utenti
+- `/images` — CRUD, upload, rotate, tags, thumbnail, ZIP
+- `/folders` — CRUD folders, toggle privacy
+- `/share` — share links
+- `/profile` — user profile
+- `/admin` — stats, user management
 
-## Licenza
+## License
 
 MIT
