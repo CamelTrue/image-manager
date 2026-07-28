@@ -425,6 +425,8 @@ export default function DashboardPage() {
           onUpdated={refresh}
           allImages={images}
           onNavigate={setPreviewImage}
+          folders={folders}
+          onMove={() => { refresh(); refreshFolders() }}
         />
       )}
 

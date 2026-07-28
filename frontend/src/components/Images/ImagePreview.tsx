@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Download, Trash2, Info, Play, Pause, RotateCw, Share2, Tag, ChevronLeft, ChevronRight, Maximize2, Heart, Camera, MapPin } from 'lucide-react'
-import { getImageUrl, rotateImage, getExif } from '../../api/images'
-import type { ImageInfo, ImageExif } from '../../types'
+import { X, Download, Trash2, Info, Play, Pause, RotateCw, Share2, Tag, ChevronLeft, ChevronRight, Maximize2, Heart, Camera, MapPin, Folder } from 'lucide-react'
+import { getImageUrl, rotateImage, getExif, moveImage } from '../../api/images'
+import type { ImageInfo, ImageExif, FolderTree } from '../../types'
 import TagsEditor from './TagsEditor'
 import ShareDialog from './ShareDialog'
 
@@ -13,6 +13,8 @@ interface Props {
   onUpdated?: () => void
   allImages?: ImageInfo[]
   onNavigate?: (image: ImageInfo) => void
+  folders?: FolderTree[]
+  onMove?: (id: number, folderId: number | null) => void
 }
 
 function formatSize(bytes: number): string {
@@ -21,11 +23,12 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function ImagePreview({ image, onClose, onDelete, onFavorite, onUpdated, allImages, onNavigate }: Props) {
+export default function ImagePreview({ image, onClose, onDelete, onFavorite, onUpdated, allImages, onNavigate, folders, onMove }: Props) {
   const [showInfo, setShowInfo] = useState(false)
   const [slideshow, setSlideshow] = useState(false)
   const [showTags, setShowTags] = useState(false)
   const [showShare, setShowShare] = useState(false)
+  const [showMove, setShowMove] = useState(false)
   const [rotating, setRotating] = useState(false)
   const [currentImage, setCurrentImage] = useState(image)
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null)
@@ -55,7 +58,7 @@ export default function ImagePreview({ image, onClose, onDelete, onFavorite, onU
   }, [slideshow, currentImage, allImages, onNavigate])
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
+    if (e.key === 'Escape') { onClose(); setShowMove(false) }
     if (e.key === 'ArrowRight' && allImages && onNavigate) {
       const idx = allImages.findIndex((i) => i.id === currentImage.id)
       if (idx < allImages.length - 1) onNavigate(allImages[idx + 1])
@@ -102,6 +105,23 @@ export default function ImagePreview({ image, onClose, onDelete, onFavorite, onU
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     setDims({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
   }
+
+  const handleMove = async (folderId: number | null) => {
+    await moveImage(currentImage.id, folderId)
+    setShowMove(false)
+    onMove?.(currentImage.id, folderId)
+    onClose()
+  }
+
+  // Flatten folder tree into list
+  const flatFolders = (folders || []).reduce<(FolderTree & { depth: number })[]>((acc, f) => {
+    const walk = (tree: FolderTree, depth: number) => {
+      acc.push({ ...tree, depth })
+      tree.children.forEach((c) => walk(c, depth + 1))
+    }
+    walk(f, 0)
+    return acc
+  }, [])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in" onClick={onClose}>
@@ -189,6 +209,45 @@ export default function ImagePreview({ image, onClose, onDelete, onFavorite, onU
         >
           <Tag size={14} />
         </button>
+
+        {onMove && folders && (
+          <div className="relative">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowMove(!showMove) }}
+              className="flex items-center gap-2 bg-dark-700/80 hover:bg-dark-600 text-zinc-400 hover:text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+              title="Sposta in cartella"
+            >
+              <Folder size={14} />
+            </button>
+            {showMove && (
+              <div
+                className="absolute top-full right-0 mt-1 z-20 glass-strong rounded-xl p-2 w-56 animate-fade-in border border-dark-600/20 max-h-60 overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => handleMove(null)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                    currentImage.folder_id === null ? 'text-accent-400 bg-accent-500/10' : 'text-zinc-300 hover:bg-dark-600'
+                  }`}
+                >
+                  📁 Nessuna cartella
+                </button>
+                {flatFolders.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => handleMove(f.id)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                      currentImage.folder_id === f.id ? 'text-accent-400 bg-accent-500/10' : 'text-zinc-300 hover:bg-dark-600'
+                    }`}
+                    style={{ paddingLeft: `${12 + f.depth * 16}px` }}
+                  >
+                    {f.is_private ? '🔒 ' : '📁 '}{f.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {onFavorite && (
           <button
