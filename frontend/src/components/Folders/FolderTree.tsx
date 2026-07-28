@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderTree as FolderIcon, ChevronRight, ChevronDown, FolderPlus, Trash2, Edit3, Check, X, Images, Lock, Unlock, Heart } from 'lucide-react'
+import { FolderTree as FolderIcon, ChevronRight, ChevronDown, FolderPlus, Trash2, Edit3, Check, X, Images, Lock, Unlock, Heart, Calendar } from 'lucide-react'
 import type { FolderTree as FolderTreeType } from '../../types'
 
 interface Props {
@@ -15,6 +15,8 @@ interface Props {
   onFavoritesClick?: () => void
   trashedFilter?: boolean
   onTrashClick?: () => void
+  timelineFilter?: boolean
+  onTimelineClick?: () => void
 }
 
 function FolderNode({ folder, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate, depth = 0 }: {
@@ -181,7 +183,7 @@ function FolderNode({ folder, selectedId, onSelect, onCreate, onDelete, onRename
   )
 }
 
-export default function FolderTree({ folders, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate, favoriteFilter, onFavoritesClick, trashedFilter, onTrashClick }: Props) {
+export default function FolderTree({ folders, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate, favoriteFilter, onFavoritesClick, trashedFilter, onTrashClick, timelineFilter, onTimelineClick }: Props) {
   const [newRootName, setNewRootName] = useState('')
   const [creatingRoot, setCreatingRoot] = useState(false)
 
@@ -233,6 +235,18 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
         >
           <Heart size={12} className={favoriteFilter ? 'text-accent-400' : 'text-zinc-500'} />
           <span className="font-medium">Preferiti</span>
+        </div>
+
+        <div
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors text-[11px] ${
+            timelineFilter
+              ? 'bg-accent-500/15 text-accent-400'
+              : 'text-zinc-400 hover:bg-dark-700/40 hover:text-zinc-200'
+          }`}
+          onClick={() => onTimelineClick?.()}
+        >
+          <Calendar size={12} className={timelineFilter ? 'text-accent-400' : 'text-zinc-500'} />
+          <span className="font-medium">Timeline</span>
         </div>
 
         <div

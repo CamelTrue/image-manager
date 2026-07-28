@@ -3,6 +3,7 @@ import { Search, PanelLeftClose, PanelLeft, Trash2, Download, X, CheckSquare, Sq
 import FolderTree from '../components/Folders/FolderTree'
 import ImageGrid from '../components/Images/ImageGrid'
 import ImagePreview from '../components/Images/ImagePreview'
+import TimelineView from '../components/Images/TimelineView'
 import UploadDialog from '../components/Images/UploadDialog'
 import AdvancedSearch from '../components/Images/AdvancedSearch'
 import TagsEditor from '../components/Images/TagsEditor'
@@ -39,6 +40,7 @@ export default function DashboardPage() {
   const [tagImage, setTagImage] = useState<ImageInfo | null>(null)
   const [revealedFolders, setRevealedFolders] = useState<Set<number>>(new Set())
   const [revealAllPrivate, setRevealAllPrivate] = useState(false)
+  const [timelineFilter, setTimelineFilter] = useState(false)
 
   useEffect(() => {
     setRevealedFolders(new Set())
@@ -53,7 +55,7 @@ export default function DashboardPage() {
     favoriteFilter, setFavoriteFilter,
     trashedFilter, setTrashedFilter,
     upload, remove, rename, refresh,
-  } = useImages(selectedFolder)
+  } = useImages(timelineFilter ? null : selectedFolder)
   const { folders, create: createFolder, remove: deleteFolder, rename: renameFolder, refresh: refreshFolders, togglePrivate } = useFolders()
 
   const isAllView = selectedFolder === null
@@ -183,17 +185,19 @@ export default function DashboardPage() {
       >
         <FolderTree
           folders={folders}
-          selectedId={favoriteFilter || trashedFilter ? null : selectedFolder}
-          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false); setTrashedFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          selectedId={favoriteFilter || trashedFilter || timelineFilter ? null : selectedFolder}
+          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false); setTrashedFilter(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
           onCreate={createFolder}
           onDelete={deleteFolder}
           onRename={renameFolder}
           onDropImage={handleDropImage}
           onTogglePrivate={togglePrivate}
           favoriteFilter={favoriteFilter}
-          onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
           trashedFilter={trashedFilter}
-          onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          timelineFilter={timelineFilter}
+          onTimelineClick={() => { setTimelineFilter(true); setFavoriteFilter(false); setTrashedFilter(false); setSelectedFolder(null); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
         />
       </div>
 
@@ -209,17 +213,19 @@ export default function DashboardPage() {
             </div>
             <FolderTree
               folders={folders}
-              selectedId={favoriteFilter || trashedFilter ? null : selectedFolder}
-              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false); setTrashedFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              selectedId={favoriteFilter || trashedFilter || timelineFilter ? null : selectedFolder}
+              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false); setTrashedFilter(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
               onCreate={createFolder}
               onDelete={deleteFolder}
               onRename={renameFolder}
               onDropImage={handleDropImage}
               onTogglePrivate={togglePrivate}
               favoriteFilter={favoriteFilter}
-              onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
               trashedFilter={trashedFilter}
-              onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setSidebarOpen(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setSidebarOpen(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              timelineFilter={timelineFilter}
+              onTimelineClick={() => { setTimelineFilter(true); setFavoriteFilter(false); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
             />
           </div>
         </div>
@@ -382,6 +388,22 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
+              {timelineFilter ? (
+                <TimelineView
+                  images={images}
+                  loading={loading}
+                  onDelete={(id) => setConfirmDelete(id)}
+                  onRename={rename}
+                  onPreview={setPreviewImage}
+                  folders={folders}
+                  selectedIds={selectedIds}
+                  onToggleSelect={toggleSelect}
+                  onDragStart={() => {}}
+                  onTags={(img) => setTagImage(img)}
+                  onFavorite={handleFavorite}
+                />
+              ) : (
+                <>
               {isAllView && hiddenImages.length > 0 && !revealAllPrivate && (
                 <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg bg-dark-800/40 border border-dark-600/30 animate-fade-in">
                   <Lock size={14} className="text-zinc-500 shrink-0" />
@@ -411,6 +433,8 @@ export default function DashboardPage() {
                 onTags={(img) => setTagImage(img)}
                 onFavorite={handleFavorite}
               />
+              </>
+              )}
             </>
           )}
         </div>
