@@ -184,16 +184,16 @@ export default function DashboardPage() {
         <FolderTree
           folders={folders}
           selectedId={favoriteFilter || trashedFilter ? null : selectedFolder}
-          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false); setTrashedFilter(false) }}
+          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false); setTrashedFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
           onCreate={createFolder}
           onDelete={deleteFolder}
           onRename={renameFolder}
           onDropImage={handleDropImage}
           onTogglePrivate={togglePrivate}
           favoriteFilter={favoriteFilter}
-          onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null) }}
+          onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
           trashedFilter={trashedFilter}
-          onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null) }}
+          onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
         />
       </div>
 
@@ -210,16 +210,16 @@ export default function DashboardPage() {
             <FolderTree
               folders={folders}
               selectedId={favoriteFilter || trashedFilter ? null : selectedFolder}
-              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false); setTrashedFilter(false) }}
+              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false); setTrashedFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
               onCreate={createFolder}
               onDelete={deleteFolder}
               onRename={renameFolder}
               onDropImage={handleDropImage}
               onTogglePrivate={togglePrivate}
               favoriteFilter={favoriteFilter}
-              onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false) }}
+              onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
               trashedFilter={trashedFilter}
-              onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setSidebarOpen(false) }}
+              onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setSidebarOpen(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
             />
           </div>
         </div>
