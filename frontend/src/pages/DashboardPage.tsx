@@ -389,8 +389,24 @@ export default function DashboardPage() {
           ) : (
             <>
               {timelineFilter ? (
+                <>
+                {isAllView && hiddenImages.length > 0 && !revealAllPrivate && (
+                  <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg bg-dark-800/40 border border-dark-600/30 animate-fade-in">
+                    <Lock size={14} className="text-zinc-500 shrink-0" />
+                    <span className="text-xs text-zinc-500 flex-1">
+                      {hiddenImages.length} {hiddenImages.length === 1 ? 'immagine nascosta' : 'immagini nascoste'} in cartelle private
+                    </span>
+                    <button
+                      onClick={() => setRevealAllPrivate(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-500/15 hover:bg-accent-500/25 text-accent-400 border border-accent-500/30 text-[11px] font-medium rounded-lg transition-colors"
+                    >
+                      <Eye size={12} />
+                      Mostra
+                    </button>
+                  </div>
+                )}
                 <TimelineView
-                  images={images}
+                  images={visibleImages}
                   loading={loading}
                   onDelete={(id) => setConfirmDelete(id)}
                   onRename={rename}
@@ -402,6 +418,7 @@ export default function DashboardPage() {
                   onTags={(img) => setTagImage(img)}
                   onFavorite={handleFavorite}
                 />
+              </>
               ) : (
                 <>
               {isAllView && hiddenImages.length > 0 && !revealAllPrivate && (
