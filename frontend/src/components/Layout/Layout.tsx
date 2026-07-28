@@ -117,6 +117,18 @@ export default function Layout() {
       <main className="flex-1 overflow-hidden">
         <Outlet />
       </main>
+
+      <footer className="h-[25vh] glass border-t border-dark-600/30 flex items-center justify-center shrink-0">
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
+              <Image size={10} className="text-white" />
+            </div>
+            <span className="text-xs font-semibold gradient-text">Image Manager</span>
+          </div>
+          <p className="text-[10px] text-zinc-600">&copy; {new Date().getFullYear()} — Tutti i diritti riservati</p>
+        </div>
+      </footer>
     </div>
     </Tooltip.Provider>
   )
