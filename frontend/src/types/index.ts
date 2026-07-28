@@ -65,3 +65,20 @@ export interface Profile {
   total_size: number
   folder_count: number
 }
+
+export interface ImageExif {
+  image_id: number
+  make: string | null
+  model: string | null
+  lens: string | null
+  iso: number | null
+  aperture: number | null
+  shutter_speed: string | null
+  focal_length: number | null
+  gps_lat: number | null
+  gps_lng: number | null
+  date_taken: string | null
+  flash: number | null
+  exposure_program: number | null
+  software: string | null
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Download, Trash2, Info, Play, Pause, RotateCw, Share2, Tag, ChevronLeft, ChevronRight, Maximize2, Heart } from 'lucide-react'
-import { getImageUrl, rotateImage } from '../../api/images'
-import type { ImageInfo } from '../../types'
+import { X, Download, Trash2, Info, Play, Pause, RotateCw, Share2, Tag, ChevronLeft, ChevronRight, Maximize2, Heart, Camera, MapPin } from 'lucide-react'
+import { getImageUrl, rotateImage, getExif } from '../../api/images'
+import type { ImageInfo, ImageExif } from '../../types'
 import TagsEditor from './TagsEditor'
 import ShareDialog from './ShareDialog'
 
@@ -29,8 +29,18 @@ export default function ImagePreview({ image, onClose, onDelete, onFavorite, onU
   const [rotating, setRotating] = useState(false)
   const [currentImage, setCurrentImage] = useState(image)
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null)
+  const [exif, setExif] = useState<ImageExif | null>(null)
+  const [loadingExif, setLoadingExif] = useState(false)
 
   useEffect(() => { setCurrentImage(image) }, [image])
+
+  useEffect(() => {
+    if (!showInfo) return
+    setLoadingExif(true)
+    getExif(currentImage.id).then((res) => {
+      setExif(res.data ?? null)
+    }).catch(() => setExif(null)).finally(() => setLoadingExif(false))
+  }, [showInfo, currentImage.id])
 
   useEffect(() => {
     if (!slideshow) return
@@ -274,6 +284,83 @@ export default function ImagePreview({ image, onClose, onDelete, onFavorite, onU
                   ))}
                 </div>
               </div>
+            )}
+            {exif && (
+              <>
+                <div className="border-t border-dark-600/30 my-2" />
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-300 mb-2">
+                  <Camera size={12} /> Dati fotocamera
+                </div>
+                {exif.make && exif.model && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Fotocamera</span>
+                    <span className="text-zinc-300">{exif.make} {exif.model}</span>
+                  </div>
+                )}
+                {exif.lens && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Obiettivo</span>
+                    <span className="text-zinc-300">{exif.lens}</span>
+                  </div>
+                )}
+                {exif.iso != null && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">ISO</span>
+                    <span className="text-zinc-300">{exif.iso}</span>
+                  </div>
+                )}
+                {exif.aperture != null && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Diaframma</span>
+                    <span className="text-zinc-300">f/{exif.aperture.toFixed(1)}</span>
+                  </div>
+                )}
+                {exif.shutter_speed && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Tempo</span>
+                    <span className="text-zinc-300">{exif.shutter_speed}</span>
+                  </div>
+                )}
+                {exif.focal_length != null && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Lunghezza focale</span>
+                    <span className="text-zinc-300">{exif.focal_length.toFixed(0)}mm</span>
+                  </div>
+                )}
+                {exif.date_taken && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Scattata il</span>
+                    <span className="text-zinc-300">{new Date(exif.date_taken).toLocaleString('it-IT')}</span>
+                  </div>
+                )}
+                {exif.flash != null && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Flash</span>
+                    <span className="text-zinc-300">{exif.flash !== 0 ? 'Sì' : 'No'}</span>
+                  </div>
+                )}
+                {exif.software && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Software</span>
+                    <span className="text-zinc-300">{exif.software}</span>
+                  </div>
+                )}
+                {exif.gps_lat != null && exif.gps_lng != null && (
+                  <>
+                    <div className="border-t border-dark-600/30 my-2" />
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-300 mb-2">
+                      <MapPin size={12} /> Posizione
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Coordinate</span>
+                      <span className="text-zinc-300">{exif.gps_lat.toFixed(4)}, {exif.gps_lng.toFixed(4)}</span>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+            {loadingExif && (
+              <div className="text-[11px] text-zinc-500 animate-pulse">Caricamento EXIF...</div>
             )}
           </div>
         </div>

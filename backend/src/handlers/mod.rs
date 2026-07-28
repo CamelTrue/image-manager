@@ -8,3 +8,4 @@ pub mod tags;
 pub mod thumbnails;
 pub mod rotate;
 pub mod zip;
+pub mod exif;

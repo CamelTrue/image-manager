@@ -2,6 +2,7 @@
 use actix_multipart::Multipart;
 use futures_util::StreamExt;
 use rusqlite::params;
+use std::io::{BufReader, Cursor};
 
 use crate::config::Config;
 use crate::db::Database;
@@ -9,6 +10,7 @@ use crate::errors::AppError;
 use crate::middleware::auth::AuthUser;
 use crate::models::image::*;
 use crate::services::storage::StorageService;
+use exif::{In, Reader as ExifReader, Tag, Value};
 use image::GenericImageView;
 
 const IMG_COLS: &str = "id, filename, original, mime_type, size, folder_id, owner_id, tags, width, height, is_favorite, deleted_at, created_at, updated_at";
@@ -29,6 +31,70 @@ fn row_to_image(row: &rusqlite::Row) -> rusqlite::Result<Image> {
         deleted_at: row.get(11)?,
         created_at: row.get(12)?,
         updated_at: row.get(13)?,
+    })
+}
+
+fn extract_exif(data: &[u8]) -> Option<ImageExif> {
+    let mut cursor = Cursor::new(data);
+    let mut buf_reader = BufReader::new(&mut cursor);
+    let parsed = ExifReader::new().read_from_container(&mut buf_reader).ok()?;
+
+    let f = |tag| parsed.get_field(tag, In::PRIMARY);
+
+    let get_str = |tag| f(tag).map(|f| { let s = f.value.display_as(f.tag).to_string(); s.trim_matches('"').to_string() });
+    let get_int = |tag| f(tag).and_then(|f| f.value.get_uint(0).map(|v| v as i64));
+
+    let get_rat = |tag| {
+        f(tag).and_then(|f| match &f.value {
+            Value::Rational(rats) => rats.first().map(|r| r.to_f64()),
+            _ => None,
+        })
+    };
+
+    let get_gps = |tag, ref_tag| {
+        let coord = f(tag).and_then(|f| match &f.value {
+            Value::Rational(rats) if rats.len() >= 3 => {
+                let d = rats[0].to_f64();
+                let m = rats[1].to_f64();
+                let s = rats[2].to_f64();
+                Some(d + m / 60.0 + s / 3600.0)
+            }
+            _ => None,
+        })?;
+        let is_neg = f(ref_tag)
+            .map(|f| { let s = f.value.display_as(f.tag).to_string(); s == "S" || s == "W" })
+            .unwrap_or(false);
+        Some(if is_neg { -coord } else { coord })
+    };
+
+    let ss = get_rat(Tag::ExposureTime).map(|v| {
+        if v > 0.0 {
+            let r = (1.0 / v).round();
+            if r >= 1.0 && r <= 4000.0 {
+                format!("1/{}", r as i64)
+            } else {
+                format!("{:.1}s", v)
+            }
+        } else {
+            "N/A".to_string()
+        }
+    });
+
+    Some(ImageExif {
+        image_id: 0,
+        make: get_str(Tag::Make),
+        model: get_str(Tag::Model),
+        lens: get_str(Tag::LensModel),
+        iso: get_int(Tag::PhotographicSensitivity),
+        aperture: get_rat(Tag::FNumber),
+        shutter_speed: ss,
+        focal_length: get_rat(Tag::FocalLength),
+        gps_lat: get_gps(Tag::GPSLatitude, Tag::GPSLatitudeRef),
+        gps_lng: get_gps(Tag::GPSLongitude, Tag::GPSLongitudeRef),
+        date_taken: get_str(Tag::DateTimeOriginal),
+        flash: get_int(Tag::Flash),
+        exposure_program: get_int(Tag::ExposureProgram),
+        software: get_str(Tag::Software),
     })
 }
 
@@ -164,6 +230,19 @@ pub async fn upload_image(
     )?;
 
     let image_id = conn.last_insert_rowid();
+
+    if let Some(exif) = extract_exif(&file_data) {
+        let _ = conn.execute(
+            "INSERT INTO image_exif (image_id, make, model, lens, iso, aperture, shutter_speed, focal_length, gps_lat, gps_lng, date_taken, flash, exposure_program, software) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+            params![
+                image_id, exif.make, exif.model, exif.lens, exif.iso,
+                exif.aperture, exif.shutter_speed, exif.focal_length,
+                exif.gps_lat, exif.gps_lng, exif.date_taken, exif.flash,
+                exif.exposure_program, exif.software,
+            ],
+        );
+    }
+
     let image: Image = conn.query_row(
         &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
         params![image_id],

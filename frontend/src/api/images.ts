@@ -1,5 +1,5 @@
 import api from './client'
-import type { ImageInfo } from '../types'
+import type { ImageInfo, ImageExif } from '../types'
 
 export const listImages = (params: { folder_id?: number; search?: string; tags?: string; mime_type?: string; min_size?: number; max_size?: number; sort?: string; order?: string }) =>
   api.get<ImageInfo[]>('/images', { params })
@@ -70,3 +70,6 @@ export const permanentDelete = (id: number) =>
 
 export const emptyTrash = () =>
   api.delete('/trash/empty')
+
+export const getExif = (id: number) =>
+  api.get<ImageExif | null>(`/images/${id}/exif`)

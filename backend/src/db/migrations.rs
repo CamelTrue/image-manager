@@ -62,6 +62,25 @@ pub fn run_migrations(db: &Database) -> Result<()> {
     let _ = conn.execute_batch("ALTER TABLE images ADD COLUMN is_favorite INTEGER DEFAULT 0");
     let _ = conn.execute_batch("ALTER TABLE images ADD COLUMN deleted_at DATETIME DEFAULT NULL");
 
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS image_exif (
+            image_id        INTEGER PRIMARY KEY REFERENCES images(id) ON DELETE CASCADE,
+            make            TEXT,
+            model           TEXT,
+            lens            TEXT,
+            iso             INTEGER,
+            aperture        REAL,
+            shutter_speed   TEXT,
+            focal_length    REAL,
+            gps_lat         REAL,
+            gps_lng         REAL,
+            date_taken      TEXT,
+            flash           INTEGER,
+            exposure_program INTEGER,
+            software        TEXT
+        );"
+    )?;
+
     let admin_exists: bool = conn.query_row(
         "SELECT COUNT(*) > 0 FROM users WHERE role = 'admin'",
         [],

@@ -66,3 +66,21 @@ pub struct UpdateImageRequest {
 pub struct MoveImageRequest {
     pub folder_id: Option<i64>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ImageExif {
+    pub image_id: i64,
+    pub make: Option<String>,
+    pub model: Option<String>,
+    pub lens: Option<String>,
+    pub iso: Option<i64>,
+    pub aperture: Option<f64>,
+    pub shutter_speed: Option<String>,
+    pub focal_length: Option<f64>,
+    pub gps_lat: Option<f64>,
+    pub gps_lng: Option<f64>,
+    pub date_taken: Option<String>,
+    pub flash: Option<i64>,
+    pub exposure_program: Option<i64>,
+    pub software: Option<String>,
+}

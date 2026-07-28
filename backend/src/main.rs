@@ -60,6 +60,7 @@ async fn main() -> std::io::Result<()> {
             .route("/api/images/{id}/rotate", web::post().to(handlers::rotate::rotate_image))
             .route("/api/images/{id}/tags", web::put().to(handlers::tags::set_tags))
             .route("/api/images/{id}/favorite", web::post().to(handlers::images::toggle_favorite))
+            .route("/api/images/{id}/exif", web::get().to(handlers::exif::get_exif))
             .route("/api/images/{id}/restore", web::post().to(handlers::images::restore_image))
             .route("/api/images/{id}/permanent", web::delete().to(handlers::images::permanent_delete))
             .route("/api/trash/empty", web::delete().to(handlers::images::empty_trash))
