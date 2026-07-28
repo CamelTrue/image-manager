@@ -319,7 +319,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg bg-dark-800/40 border border-dark-600/30 animate-fade-in">
                   <Lock size={14} className="text-zinc-500 shrink-0" />
                   <span className="text-xs text-zinc-500 flex-1">
-                    {hiddenImages.length} immagine{hiddenImages.length !== 1 ? 'i' : ''} nascosta{hiddenImages.length !== 1 ? 'i' : ''} in cartelle private
+                    {hiddenImages.length} {hiddenImages.length === 1 ? 'immagine nascosta' : 'immagini nascoste'} in cartelle private
                   </span>
                   <button
                     onClick={() => setRevealAllPrivate(true)}

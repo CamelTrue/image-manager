@@ -24,17 +24,49 @@ Self-hosted image management with a modern web interface. Built with **Rust (Act
 
 ## Installation
 
-### 1. Clone the repository
+```
+┌─────────────────────────────────────────────────────┐
+│                  ROADMAP                             │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  1. CLONE                                           │
+│  ┌─────────────────────────────────┐                │
+│  │ git clone ... && cd image-manager│                │
+│  └──────────┬──────────────────────┘                │
+│             ▼                                       │
+│  2. CONFIGURE (optional)                            │
+│  ┌─────────────────────────────────┐                │
+│  │ Create .env with JWT_SECRET      │                │
+│  └──────────┬──────────────────────┘                │
+│             ▼                                       │
+│  3. PREPARE DATA DIRS                                │
+│  ┌─────────────────────────────────┐                │
+│  │ mkdir -p data                   │                │
+│  │ Check E:/images path in compose │                │
+│  └──────────┬──────────────────────┘                │
+│             ▼                                       │
+│  4. BUILD & START                                   │
+│  ┌─────────────────────────────────┐                │
+│  │ docker compose up --build -d    │                │
+│  └──────────┬──────────────────────┘                │
+│             ▼                                       │
+│  5. ACCESS                                          │
+│  ┌─────────────────────────────────┐                │
+│  │ http://localhost:3000           │                │
+│  │ admin / admin                   │                │
+│  └─────────────────────────────────┘                │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+```
 
+### 1. Clone
 ```bash
 git clone https://github.com/CamelTrue/image-manager.git
 cd image-manager
 ```
 
 ### 2. Configure (optional)
-
 Create a `.env` file in the project root to customize settings:
-
 ```env
 JWT_SECRET=your-secret-key-change-me
 JWT_EXPIRES_IN=900
@@ -44,7 +76,6 @@ REFRESH_EXPIRES_IN=604800
 If you don't create the file, the default value `change-me-in-production` is used. **Change it in production.**
 
 ### 3. Create data directories
-
 ```bash
 mkdir -p data
 ```
@@ -53,13 +84,11 @@ Images are stored at `E:/images` on Windows (edit the path in `docker-compose.ym
 The SQLite database is stored in `data/`.
 
 ### 4. Start
-
 ```bash
 docker compose up --build -d
 ```
 
 ### 5. Access
-
 Open your browser at **http://localhost:3000**
 
 - **Username:** `admin`
