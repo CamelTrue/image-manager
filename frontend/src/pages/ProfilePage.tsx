@@ -65,7 +65,7 @@ export default function ProfilePage() {
   ] : []
 
   return (
-    <div className="flex items-center justify-center min-h-full p-6 md:p-10 animate-fade-in">
+    <div className="flex justify-center min-h-full p-6 md:p-10 animate-fade-in">
       <div className="w-full max-w-lg">
         <div className="mb-8 text-center">
           <h2 className="text-2xl md:text-3xl font-bold gradient-text">Profilo</h2>
