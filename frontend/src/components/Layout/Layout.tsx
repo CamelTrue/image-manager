@@ -120,7 +120,7 @@ export default function Layout() {
             <div className="flex-1">
               <Outlet />
             </div>
-            <footer className="min-h-[25vh] glass border-t border-dark-600/30 flex items-center justify-center shrink-0">
+            <footer className="min-h-[25vh] mt-[7vh] glass border-t border-dark-600/30 flex items-center justify-center shrink-0">
               <div className="text-center py-4">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <div className="w-5 h-5 rounded-md bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
