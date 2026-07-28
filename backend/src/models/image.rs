@@ -84,3 +84,12 @@ pub struct ImageExif {
     pub exposure_program: Option<i64>,
     pub software: Option<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeotaggedImage {
+    pub id: i64,
+    pub original: String,
+    pub gps_lat: f64,
+    pub gps_lng: f64,
+    pub created_at: String,
+}

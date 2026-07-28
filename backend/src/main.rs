@@ -51,6 +51,8 @@ async fn main() -> std::io::Result<()> {
             .route("/api/images", web::get().to(handlers::images::list_images))
             .route("/api/images/upload", web::post().to(handlers::images::upload_image))
             .route("/api/images/download-zip", web::post().to(handlers::zip::download_zip))
+            .route("/api/images/backfill-exif", web::post().to(handlers::images::backfill_exif))
+            .route("/api/images/geotagged", web::get().to(handlers::exif::get_geotagged))
             .route("/api/images/{id}", web::get().to(handlers::images::get_image))
             .route("/api/images/{id}/download", web::get().to(handlers::images::download_image))
             .route("/api/images/{id}", web::put().to(handlers::images::update_image))

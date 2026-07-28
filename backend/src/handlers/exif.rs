@@ -5,6 +5,7 @@ use crate::db::Database;
 use crate::errors::AppError;
 use crate::middleware::auth::AuthUser;
 use crate::models::image::ImageExif;
+use crate::models::image::GeotaggedImage;
 
 pub async fn get_exif(
     db: web::Data<Database>,
@@ -48,4 +49,34 @@ pub async fn get_exif(
     ).ok();
 
     Ok(HttpResponse::Ok().json(exif))
+}
+
+pub async fn get_geotagged(
+    db: web::Data<Database>,
+    user: AuthUser,
+) -> Result<HttpResponse, AppError> {
+    let conn = db.conn.lock().unwrap();
+
+    let images: Vec<GeotaggedImage> = conn
+        .prepare(
+            "SELECT i.id, i.original, e.gps_lat, e.gps_lng, i.created_at
+             FROM images i
+             INNER JOIN image_exif e ON i.id = e.image_id
+             WHERE i.owner_id = ?1 AND i.deleted_at IS NULL
+               AND e.gps_lat IS NOT NULL AND e.gps_lng IS NOT NULL
+             ORDER BY i.created_at DESC"
+        )?
+        .query_map(params![user.user_id], |row| {
+            Ok(GeotaggedImage {
+                id: row.get(0)?,
+                original: row.get(1)?,
+                gps_lat: row.get(2)?,
+                gps_lng: row.get(3)?,
+                created_at: row.get(4)?,
+            })
+        })?
+        .filter_map(|r| r.ok())
+        .collect();
+
+    Ok(HttpResponse::Ok().json(images))
 }

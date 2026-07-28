@@ -4,12 +4,14 @@ import FolderTree from '../components/Folders/FolderTree'
 import ImageGrid from '../components/Images/ImageGrid'
 import ImagePreview from '../components/Images/ImagePreview'
 import TimelineView from '../components/Images/TimelineView'
+import MapView from '../components/Images/MapView'
 import UploadDialog from '../components/Images/UploadDialog'
 import AdvancedSearch from '../components/Images/AdvancedSearch'
 import TagsEditor from '../components/Images/TagsEditor'
 import { useImages } from '../hooks/useImages'
 import { useFolders } from '../hooks/useFolders'
-import { getImageUrl, downloadZip, moveImage, toggleFavorite, restoreImage, permanentDelete, emptyTrash } from '../api/images'
+import { getImageUrl, downloadZip, moveImage, toggleFavorite, restoreImage, permanentDelete, emptyTrash, getGeotaggedImages } from '../api/images'
+import type { GeotaggedImage } from '../api/images'
 import type { ImageInfo, FolderTree as FolderTreeType } from '../types'
 
 function findFolder(tree: FolderTreeType[], id: number): FolderTreeType | null {
@@ -41,11 +43,22 @@ export default function DashboardPage() {
   const [revealedFolders, setRevealedFolders] = useState<Set<number>>(new Set())
   const [revealAllPrivate, setRevealAllPrivate] = useState(false)
   const [timelineFilter, setTimelineFilter] = useState(false)
+  const [mapFilter, setMapFilter] = useState(false)
+  const [geotaggedImages, setGeotaggedImages] = useState<GeotaggedImage[]>([])
+  const [geotaggedLoading, setGeotaggedLoading] = useState(false)
 
   useEffect(() => {
     setRevealedFolders(new Set())
     setRevealAllPrivate(false)
   }, [selectedFolder])
+
+  useEffect(() => {
+    if (!mapFilter) { setGeotaggedImages([]); return }
+    setGeotaggedLoading(true)
+    getGeotaggedImages()
+      .then((res) => setGeotaggedImages(res.data))
+      .finally(() => setGeotaggedLoading(false))
+  }, [mapFilter])
 
   const {
     images, loading, search, setSearch,
@@ -55,7 +68,7 @@ export default function DashboardPage() {
     favoriteFilter, setFavoriteFilter,
     trashedFilter, setTrashedFilter,
     upload, remove, rename, refresh,
-  } = useImages(timelineFilter ? null : selectedFolder)
+  } = useImages(timelineFilter || mapFilter ? null : selectedFolder)
   const { folders, create: createFolder, remove: deleteFolder, rename: renameFolder, refresh: refreshFolders, togglePrivate } = useFolders()
 
   const isAllView = selectedFolder === null
@@ -185,19 +198,21 @@ export default function DashboardPage() {
       >
         <FolderTree
           folders={folders}
-          selectedId={favoriteFilter || trashedFilter || timelineFilter ? null : selectedFolder}
-          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false); setTrashedFilter(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              selectedId={favoriteFilter || trashedFilter || timelineFilter || mapFilter ? null : selectedFolder}
+          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false); setTrashedFilter(false); setTimelineFilter(false); setMapFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
           onCreate={createFolder}
           onDelete={deleteFolder}
           onRename={renameFolder}
           onDropImage={handleDropImage}
           onTogglePrivate={togglePrivate}
           favoriteFilter={favoriteFilter}
-          onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setTimelineFilter(false); setMapFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
           trashedFilter={trashedFilter}
-          onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setTimelineFilter(false); setMapFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
           timelineFilter={timelineFilter}
-          onTimelineClick={() => { setTimelineFilter(true); setFavoriteFilter(false); setTrashedFilter(false); setSelectedFolder(null); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          onTimelineClick={() => { setTimelineFilter(true); setFavoriteFilter(false); setTrashedFilter(false); setSelectedFolder(null); setMapFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          mapFilter={mapFilter}
+          onMapClick={() => { setMapFilter(true); setFavoriteFilter(false); setTrashedFilter(false); setSelectedFolder(null); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
         />
       </div>
 
@@ -213,19 +228,21 @@ export default function DashboardPage() {
             </div>
             <FolderTree
               folders={folders}
-              selectedId={favoriteFilter || trashedFilter || timelineFilter ? null : selectedFolder}
-              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false); setTrashedFilter(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+          selectedId={favoriteFilter || trashedFilter || timelineFilter || mapFilter ? null : selectedFolder}
+              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false); setTrashedFilter(false); setTimelineFilter(false); setMapFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
               onCreate={createFolder}
               onDelete={deleteFolder}
               onRename={renameFolder}
               onDropImage={handleDropImage}
               onTogglePrivate={togglePrivate}
               favoriteFilter={favoriteFilter}
-              onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              onFavoritesClick={() => { setFavoriteFilter(true); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setTimelineFilter(false); setMapFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
               trashedFilter={trashedFilter}
-              onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setSidebarOpen(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              onTrashClick={() => { setTrashedFilter(true); setFavoriteFilter(false); setSelectedFolder(null); setSidebarOpen(false); setTimelineFilter(false); setMapFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
               timelineFilter={timelineFilter}
-              onTimelineClick={() => { setTimelineFilter(true); setFavoriteFilter(false); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              onTimelineClick={() => { setTimelineFilter(true); setFavoriteFilter(false); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setMapFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
+              mapFilter={mapFilter}
+              onMapClick={() => { setMapFilter(true); setFavoriteFilter(false); setTrashedFilter(false); setSelectedFolder(null); setSidebarOpen(false); setTimelineFilter(false); setRevealAllPrivate(false); setRevealedFolders(new Set()) }}
             />
           </div>
         </div>
@@ -419,6 +436,8 @@ export default function DashboardPage() {
                   onFavorite={handleFavorite}
                 />
               </>
+              ) : mapFilter ? (
+                <MapView images={geotaggedImages} loading={geotaggedLoading} />
               ) : (
                 <>
               {isAllView && hiddenImages.length > 0 && !revealAllPrivate && (

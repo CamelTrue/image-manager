@@ -252,6 +252,45 @@ pub async fn upload_image(
     Ok(HttpResponse::Created().json(image.to_info()))
 }
 
+pub async fn backfill_exif(
+    db: web::Data<Database>,
+    user: AuthUser,
+    config: web::Data<Config>,
+) -> Result<HttpResponse, AppError> {
+    let storage = StorageService::new(&config.storage_path);
+    let conn = db.conn.lock().unwrap();
+    let mut stmt = conn.prepare(
+        "SELECT i.id, i.filename FROM images i
+         LEFT JOIN image_exif e ON i.id = e.image_id
+         WHERE e.image_id IS NULL AND i.owner_id = ?1 AND i.deleted_at IS NULL"
+    )?;
+    let ids: Vec<(i64, String)> = stmt
+        .query_map(params![user.user_id], |row| Ok((row.get(0)?, row.get(1)?)))?
+        .filter_map(|r| r.ok())
+        .collect();
+    drop(stmt);
+
+    let mut count = 0;
+    for (image_id, filename) in &ids {
+        if let Ok(data) = storage.read_file(user.user_id, filename) {
+            if let Some(exif) = extract_exif(&data) {
+                let _ = conn.execute(
+                    "INSERT INTO image_exif (image_id, make, model, lens, iso, aperture, shutter_speed, focal_length, gps_lat, gps_lng, date_taken, flash, exposure_program, software) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+                    params![
+                        image_id, exif.make, exif.model, exif.lens, exif.iso,
+                        exif.aperture, exif.shutter_speed, exif.focal_length,
+                        exif.gps_lat, exif.gps_lng, exif.date_taken, exif.flash,
+                        exif.exposure_program, exif.software,
+                    ],
+                );
+                count += 1;
+            }
+        }
+    }
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({"processed": ids.len(), "inserted": count})))
+}
+
 pub async fn get_image(
     db: web::Data<Database>,
     user: AuthUser,

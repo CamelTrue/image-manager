@@ -73,3 +73,14 @@ export const emptyTrash = () =>
 
 export const getExif = (id: number) =>
   api.get<ImageExif | null>(`/images/${id}/exif`)
+
+export interface GeotaggedImage {
+  id: number
+  original: string
+  gps_lat: number
+  gps_lng: number
+  created_at: string
+}
+
+export const getGeotaggedImages = () =>
+  api.get<GeotaggedImage[]>('/images/geotagged')
