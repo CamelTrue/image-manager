@@ -9,6 +9,7 @@ interface Props {
   onDelete: (id: number) => void
   onRename: (id: number, name: string) => void
   onPreview: (image: ImageInfo) => void
+  onFavorite?: (id: number) => void
   folders?: FolderTree[]
   showGrouping?: boolean
   selectedIds?: Set<number>
@@ -30,12 +31,13 @@ function flattenFolders(folders: FolderTree[]): { id: number; name: string; pare
   return result
 }
 
-function FolderSection({ title, images, onDelete, onRename, onPreview, selectedIds, onToggleSelect, onDragStart, onTags }: {
+function FolderSection({ title, images, onDelete, onRename, onPreview, onFavorite, selectedIds, onToggleSelect, onDragStart, onTags }: {
   title: string
   images: ImageInfo[]
   onDelete: (id: number) => void
   onRename: (id: number, name: string) => void
   onPreview: (image: ImageInfo) => void
+  onFavorite?: (id: number) => void
   selectedIds?: Set<number>
   onToggleSelect?: (id: number) => void
   onDragStart?: (id: number) => void
@@ -65,6 +67,7 @@ function FolderSection({ title, images, onDelete, onRename, onPreview, selectedI
               onDelete={onDelete}
               onRename={onRename}
               onPreview={onPreview}
+              onFavorite={onFavorite}
               selected={selectedIds?.has(image.id)}
               onToggleSelect={onToggleSelect}
               selectionMode={selectionMode}
@@ -78,7 +81,7 @@ function FolderSection({ title, images, onDelete, onRename, onPreview, selectedI
   )
 }
 
-export default function ImageGrid({ images, loading, onDelete, onRename, onPreview, folders, showGrouping, selectedIds, onToggleSelect, onDragStart, onTags }: Props) {
+export default function ImageGrid({ images, loading, onDelete, onRename, onPreview, onFavorite, folders, showGrouping, selectedIds, onToggleSelect, onDragStart, onTags }: Props) {
   const selectionMode = !!onToggleSelect
 
   if (loading) {
@@ -143,6 +146,7 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
             onDelete={onDelete}
             onRename={onRename}
             onPreview={onPreview}
+            onFavorite={onFavorite}
             selectedIds={selectedIds}
             onToggleSelect={onToggleSelect}
             onDragStart={onDragStart}
@@ -162,6 +166,7 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
           onDelete={onDelete}
           onRename={onRename}
           onPreview={onPreview}
+          onFavorite={onFavorite}
           selected={selectedIds?.has(image.id)}
           onToggleSelect={onToggleSelect}
           selectionMode={selectionMode}

@@ -8,7 +8,7 @@ import AdvancedSearch from '../components/Images/AdvancedSearch'
 import TagsEditor from '../components/Images/TagsEditor'
 import { useImages } from '../hooks/useImages'
 import { useFolders } from '../hooks/useFolders'
-import { getImageUrl, downloadZip, moveImage } from '../api/images'
+import { getImageUrl, downloadZip, moveImage, toggleFavorite } from '../api/images'
 import type { ImageInfo, FolderTree as FolderTreeType } from '../types'
 
 function findFolder(tree: FolderTreeType[], id: number): FolderTreeType | null {
@@ -50,6 +50,7 @@ export default function DashboardPage() {
     tags: tagsFilter, setTags,
     sortBy, setSortBy, sortOrder, setSortOrder,
     mimeType, setMimeType,
+    favoriteFilter, setFavoriteFilter,
     upload, remove, rename, refresh,
   } = useImages(selectedFolder)
   const { folders, create: createFolder, remove: deleteFolder, rename: renameFolder, refresh: refreshFolders, togglePrivate } = useFolders()
@@ -167,6 +168,11 @@ export default function DashboardPage() {
     setMimeType('')
   }
 
+  const handleFavorite = async (id: number) => {
+    await toggleFavorite(id)
+    refresh()
+  }
+
   return (
     <div className="flex h-full">
       <div
@@ -176,13 +182,15 @@ export default function DashboardPage() {
       >
         <FolderTree
           folders={folders}
-          selectedId={selectedFolder}
-          onSelect={setSelectedFolder}
+          selectedId={favoriteFilter ? null : selectedFolder}
+          onSelect={(id) => { setSelectedFolder(id); setFavoriteFilter(false) }}
           onCreate={createFolder}
           onDelete={deleteFolder}
           onRename={renameFolder}
           onDropImage={handleDropImage}
           onTogglePrivate={togglePrivate}
+          favoriteFilter={favoriteFilter}
+          onFavoritesClick={() => { setFavoriteFilter(true); setSelectedFolder(null) }}
         />
       </div>
 
@@ -198,13 +206,15 @@ export default function DashboardPage() {
             </div>
             <FolderTree
               folders={folders}
-              selectedId={selectedFolder}
-              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false) }}
+              selectedId={favoriteFilter ? null : selectedFolder}
+              onSelect={(id) => { setSelectedFolder(id); setSidebarOpen(false); setFavoriteFilter(false) }}
               onCreate={createFolder}
               onDelete={deleteFolder}
               onRename={renameFolder}
               onDropImage={handleDropImage}
               onTogglePrivate={togglePrivate}
+              favoriteFilter={favoriteFilter}
+              onFavoritesClick={() => { setFavoriteFilter(true); setSelectedFolder(null); setSidebarOpen(false) }}
             />
           </div>
         </div>
@@ -342,6 +352,7 @@ export default function DashboardPage() {
                 onToggleSelect={isAllView ? toggleSelect : undefined}
                 onDragStart={() => {}}
                 onTags={(img) => setTagImage(img)}
+                onFavorite={handleFavorite}
               />
             </>
           )}
@@ -353,6 +364,7 @@ export default function DashboardPage() {
           image={previewImage}
           onClose={() => setPreviewImage(null)}
           onDelete={(id) => { remove(id); setPreviewImage(null) }}
+          onFavorite={handleFavorite}
           onUpdated={refresh}
           allImages={images}
           onNavigate={setPreviewImage}

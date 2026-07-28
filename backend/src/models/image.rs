@@ -12,6 +12,7 @@ pub struct Image {
     pub tags: String,
     pub width: i64,
     pub height: i64,
+    pub is_favorite: bool,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -27,6 +28,7 @@ pub struct ImageInfo {
     pub tags: String,
     pub width: i64,
     pub height: i64,
+    pub is_favorite: bool,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -43,6 +45,7 @@ impl Image {
             tags: self.tags.clone(),
             width: self.width,
             height: self.height,
+            is_favorite: self.is_favorite,
             created_at: self.created_at.clone(),
             updated_at: self.updated_at.clone(),
         }

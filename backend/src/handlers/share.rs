@@ -106,7 +106,7 @@ pub async fn download_share(
     }
 
     let image: crate::models::image::Image = conn.query_row(
-        "SELECT id, filename, original, mime_type, size, folder_id, owner_id, tags, width, height, created_at, updated_at FROM images WHERE id = ?1",
+        "SELECT id, filename, original, mime_type, size, folder_id, owner_id, tags, width, height, created_at, updated_at, is_favorite FROM images WHERE id = ?1",
         params![share.0],
         |row| Ok(crate::models::image::Image {
             id: row.get(0)?,
@@ -121,6 +121,7 @@ pub async fn download_share(
             height: row.get(9)?,
             created_at: row.get(10)?,
             updated_at: row.get(11)?,
+            is_favorite: row.get(12)?,
         }),
     ).map_err(|_| AppError::NotFound("Image not found".into()))?;
 

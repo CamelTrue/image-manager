@@ -58,3 +58,6 @@ export const listShares = (imageId: number) =>
 
 export const deleteShare = (token: string) =>
   api.delete(`/share/${token}`)
+
+export const toggleFavorite = (id: number) =>
+  api.post<ImageInfo>(`/images/${id}/favorite`)

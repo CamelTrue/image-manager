@@ -59,6 +59,7 @@ pub fn run_migrations(db: &Database) -> Result<()> {
     let _ = conn.execute_batch("ALTER TABLE images ADD COLUMN width INTEGER DEFAULT 0");
     let _ = conn.execute_batch("ALTER TABLE images ADD COLUMN height INTEGER DEFAULT 0");
     let _ = conn.execute_batch("ALTER TABLE folders ADD COLUMN is_private INTEGER DEFAULT 0");
+    let _ = conn.execute_batch("ALTER TABLE images ADD COLUMN is_favorite INTEGER DEFAULT 0");
 
     let admin_exists: bool = conn.query_row(
         "SELECT COUNT(*) > 0 FROM users WHERE role = 'admin'",

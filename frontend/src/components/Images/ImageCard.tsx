@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, Trash2, Edit3, Check, X, Tag } from 'lucide-react'
+import { Download, Trash2, Edit3, Check, X, Tag, Heart } from 'lucide-react'
 import { getImageUrl, getThumbnailUrl } from '../../api/images'
 import type { ImageInfo } from '../../types'
 
@@ -8,6 +8,7 @@ interface Props {
   onDelete: (id: number) => void
   onRename: (id: number, name: string) => void
   onPreview: (image: ImageInfo) => void
+  onFavorite?: (id: number) => void
   selected?: boolean
   onToggleSelect?: (id: number) => void
   selectionMode?: boolean
@@ -25,7 +26,7 @@ function parseTags(tags: string): string[] {
   try { return JSON.parse(tags || '[]') } catch { return [] }
 }
 
-export default function ImageCard({ image, onDelete, onRename, onPreview, selected, onToggleSelect, selectionMode, onDragStart, onTags }: Props) {
+export default function ImageCard({ image, onDelete, onRename, onPreview, onFavorite, selected, onToggleSelect, selectionMode, onDragStart, onTags }: Props) {
   const [renaming, setRenaming] = useState(false)
   const [newName, setNewName] = useState(image.original)
 
@@ -105,6 +106,19 @@ export default function ImageCard({ image, onDelete, onRename, onPreview, select
 
         {!selectionMode && (
           <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            {onFavorite && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onFavorite(image.id) }}
+                className={`p-2 backdrop-blur-sm rounded-lg transition-colors ${
+                  image.is_favorite
+                    ? 'bg-red-500/30 text-red-400'
+                    : 'bg-dark-900/70 text-white/60 hover:text-red-400 hover:bg-red-500/20'
+                }`}
+                title={image.is_favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+              >
+                <Heart size={13} fill={image.is_favorite ? 'currentColor' : 'none'} />
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); handleDownload() }}
               className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-accent-500 text-white/80 hover:text-white transition-colors"

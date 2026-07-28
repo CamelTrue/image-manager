@@ -11,7 +11,7 @@ use crate::models::image::*;
 use crate::services::storage::StorageService;
 use image::GenericImageView;
 
-const IMG_COLS: &str = "id, filename, original, mime_type, size, folder_id, owner_id, tags, width, height, created_at, updated_at";
+const IMG_COLS: &str = "id, filename, original, mime_type, size, folder_id, owner_id, tags, width, height, is_favorite, created_at, updated_at";
 
 fn row_to_image(row: &rusqlite::Row) -> rusqlite::Result<Image> {
     Ok(Image {
@@ -25,8 +25,9 @@ fn row_to_image(row: &rusqlite::Row) -> rusqlite::Result<Image> {
         tags: row.get(7)?,
         width: row.get(8)?,
         height: row.get(9)?,
-        created_at: row.get(10)?,
-        updated_at: row.get(11)?,
+        is_favorite: row.get::<_, i64>(10)? != 0,
+        created_at: row.get(11)?,
+        updated_at: row.get(12)?,
     })
 }
 
@@ -44,6 +45,7 @@ pub async fn list_images(
     let mime_type = query.get("mime_type").cloned();
     let min_size = query.get("min_size").and_then(|v| v.parse::<i64>().ok());
     let max_size = query.get("max_size").and_then(|v| v.parse::<i64>().ok());
+    let favorite = query.get("favorite").cloned();
 
     let mut sql = format!("SELECT {} FROM images WHERE owner_id = ?1", IMG_COLS);
     let mut param_values: Vec<Box<dyn rusqlite::types::ToSql>> = vec![Box::new(user.user_id)];
@@ -76,6 +78,12 @@ pub async fn list_images(
     if let Some(ms) = max_size {
         sql.push_str(&format!(" AND size <= ?{}", param_values.len() + 1));
         param_values.push(Box::new(ms));
+    }
+
+    if let Some(ref f) = favorite {
+        if f == "true" {
+            sql.push_str(" AND is_favorite = 1");
+        }
     }
 
     let valid_sorts = ["created_at", "original", "size", "updated_at"];
@@ -296,6 +304,38 @@ pub async fn update_image(
     conn.execute(
         "UPDATE images SET original = ?1, folder_id = ?2, tags = ?3, updated_at = CURRENT_TIMESTAMP WHERE id = ?4",
         params![image.original, image.folder_id, image.tags, image_id],
+    )?;
+
+    Ok(HttpResponse::Ok().json(image.to_info()))
+}
+
+pub async fn toggle_favorite(
+    db: web::Data<Database>,
+    user: AuthUser,
+    path: web::Path<i64>,
+) -> Result<HttpResponse, AppError> {
+    let image_id = path.into_inner();
+    let conn = db.conn.lock().unwrap();
+
+    let owner_id: i64 = conn.query_row(
+        "SELECT owner_id FROM images WHERE id = ?1",
+        params![image_id],
+        |row| row.get(0),
+    ).map_err(|_| AppError::NotFound("Image not found".into()))?;
+
+    if owner_id != user.user_id && !user.is_admin() {
+        return Err(AppError::Forbidden("Not your image".into()));
+    }
+
+    conn.execute(
+        "UPDATE images SET is_favorite = CASE WHEN is_favorite = 1 THEN 0 ELSE 1 END, updated_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        params![image_id],
+    )?;
+
+    let image: Image = conn.query_row(
+        &format!("SELECT {} FROM images WHERE id = ?1", IMG_COLS),
+        params![image_id],
+        row_to_image,
     )?;
 
     Ok(HttpResponse::Ok().json(image.to_info()))

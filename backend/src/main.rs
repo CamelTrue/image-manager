@@ -59,6 +59,7 @@ async fn main() -> std::io::Result<()> {
             .route("/api/images/{id}/thumbnail", web::get().to(handlers::thumbnails::get_thumbnail))
             .route("/api/images/{id}/rotate", web::post().to(handlers::rotate::rotate_image))
             .route("/api/images/{id}/tags", web::put().to(handlers::tags::set_tags))
+            .route("/api/images/{id}/favorite", web::post().to(handlers::images::toggle_favorite))
             .route("/api/images/{id}/share", web::post().to(handlers::share::create_share))
             .route("/api/images/{id}/shares", web::get().to(handlers::share::list_shares))
             // Tag routes

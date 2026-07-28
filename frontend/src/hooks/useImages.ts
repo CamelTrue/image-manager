@@ -10,6 +10,7 @@ export function useImages(folderId: number | null) {
   const [sortBy, setSortBy] = useState('created_at')
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC')
   const [mimeType, setMimeType] = useState('')
+  const [favoriteFilter, setFavoriteFilter] = useState(false)
 
   const fetchImages = useCallback(async () => {
     setLoading(true)
@@ -21,6 +22,7 @@ export function useImages(folderId: number | null) {
       if (sortBy) params.sort = sortBy
       if (sortOrder) params.order = sortOrder
       if (mimeType) params.mime_type = mimeType
+      if (favoriteFilter) params.favorite = 'true'
       const res = await imagesApi.listImages(params as any)
       setImages(res.data)
     } catch (e) {
@@ -28,7 +30,7 @@ export function useImages(folderId: number | null) {
     } finally {
       setLoading(false)
     }
-  }, [folderId, search, tags, sortBy, sortOrder, mimeType])
+  }, [folderId, search, tags, sortBy, sortOrder, mimeType, favoriteFilter])
 
   useEffect(() => {
     fetchImages()
@@ -54,6 +56,7 @@ export function useImages(folderId: number | null) {
     tags, setTags,
     sortBy, setSortBy, sortOrder, setSortOrder,
     mimeType, setMimeType,
+    favoriteFilter, setFavoriteFilter,
     upload, remove, rename, refresh: fetchImages,
   }
 }

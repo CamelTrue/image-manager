@@ -21,6 +21,7 @@ export interface ImageInfo {
   tags: string
   width: number
   height: number
+  is_favorite: boolean
   created_at: string
   updated_at: string
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderTree as FolderIcon, ChevronRight, ChevronDown, FolderPlus, Trash2, Edit3, Check, X, Images, Lock, Unlock } from 'lucide-react'
+import { FolderTree as FolderIcon, ChevronRight, ChevronDown, FolderPlus, Trash2, Edit3, Check, X, Images, Lock, Unlock, Heart } from 'lucide-react'
 import type { FolderTree as FolderTreeType } from '../../types'
 
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
   onRename: (id: number, name: string) => void
   onDropImage?: (imageId: number, folderId: number | null) => void
   onTogglePrivate?: (id: number, current: boolean) => void
+  favoriteFilter?: boolean
+  onFavoritesClick?: () => void
 }
 
 function FolderNode({ folder, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate, depth = 0 }: {
@@ -177,7 +179,7 @@ function FolderNode({ folder, selectedId, onSelect, onCreate, onDelete, onRename
   )
 }
 
-export default function FolderTree({ folders, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate }: Props) {
+export default function FolderTree({ folders, selectedId, onSelect, onCreate, onDelete, onRename, onDropImage, onTogglePrivate, favoriteFilter, onFavoritesClick }: Props) {
   const [newRootName, setNewRootName] = useState('')
   const [creatingRoot, setCreatingRoot] = useState(false)
 
@@ -217,6 +219,18 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
         >
           <Images size={12} className={selectedId === null ? 'text-accent-400' : 'text-zinc-500'} />
           <span className="font-medium">Tutte</span>
+        </div>
+
+        <div
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors text-[11px] ${
+            favoriteFilter
+              ? 'bg-accent-500/15 text-accent-400'
+              : 'text-zinc-400 hover:bg-dark-700/40 hover:text-zinc-200'
+          }`}
+          onClick={() => onFavoritesClick?.()}
+        >
+          <Heart size={12} className={favoriteFilter ? 'text-accent-400' : 'text-zinc-500'} />
+          <span className="font-medium">Preferiti</span>
         </div>
 
         {creatingRoot && (

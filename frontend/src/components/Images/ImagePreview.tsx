@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Download, Trash2, Info, Play, Pause, RotateCw, Share2, Tag, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react'
+import { X, Download, Trash2, Info, Play, Pause, RotateCw, Share2, Tag, ChevronLeft, ChevronRight, Maximize2, Heart } from 'lucide-react'
 import { getImageUrl, rotateImage } from '../../api/images'
 import type { ImageInfo } from '../../types'
 import TagsEditor from './TagsEditor'
@@ -9,6 +9,7 @@ interface Props {
   image: ImageInfo
   onClose: () => void
   onDelete: (id: number) => void
+  onFavorite?: (id: number) => void
   onUpdated?: () => void
   allImages?: ImageInfo[]
   onNavigate?: (image: ImageInfo) => void
@@ -20,7 +21,7 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function ImagePreview({ image, onClose, onDelete, onUpdated, allImages, onNavigate }: Props) {
+export default function ImagePreview({ image, onClose, onDelete, onFavorite, onUpdated, allImages, onNavigate }: Props) {
   const [showInfo, setShowInfo] = useState(false)
   const [slideshow, setSlideshow] = useState(false)
   const [showTags, setShowTags] = useState(false)
@@ -178,6 +179,20 @@ export default function ImagePreview({ image, onClose, onDelete, onUpdated, allI
         >
           <Tag size={14} />
         </button>
+
+        {onFavorite && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onFavorite(currentImage.id) }}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+              currentImage.is_favorite
+                ? 'bg-red-500/30 text-red-400'
+                : 'bg-dark-700/80 hover:bg-dark-600 text-zinc-400 hover:text-red-400'
+            }`}
+            title={currentImage.is_favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+          >
+            <Heart size={14} fill={currentImage.is_favorite ? 'currentColor' : 'none'} />
+          </button>
+        )}
 
         <button
           onClick={(e) => { e.stopPropagation(); handleDownload() }}
