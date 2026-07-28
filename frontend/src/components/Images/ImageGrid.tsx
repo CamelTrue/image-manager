@@ -59,8 +59,9 @@ function FolderSection({ title, images, onDelete, onRename, onPreview, onFavorit
         <div className="flex-1 h-px bg-dark-600/30 ml-2" />
       </button>
       {!collapsed && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-          {images.map((image) => (
+        <div className="flex justify-center">
+          <div className="grid grid-cols-5 gap-3 w-full max-w-5xl">
+            {images.map((image) => (
             <ImageCard
               key={image.id}
               image={image}
@@ -75,6 +76,7 @@ function FolderSection({ title, images, onDelete, onRename, onPreview, onFavorit
               onTags={onTags}
             />
           ))}
+          </div>
         </div>
       )}
     </div>
@@ -86,10 +88,12 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="animate-shimmer rounded-xl aspect-square" />
-        ))}
+      <div className="flex justify-center">
+        <div className="grid grid-cols-5 gap-3 w-full max-w-5xl">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="animate-shimmer rounded-xl aspect-[4/3]" />
+          ))}
+        </div>
       </div>
     )
   }
@@ -158,9 +162,10 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-      {images.map((image) => (
-        <ImageCard
+    <div className="flex justify-center">
+      <div className="grid grid-cols-5 gap-3 w-full max-w-5xl">
+        {images.map((image) => (
+          <ImageCard
           key={image.id}
           image={image}
           onDelete={onDelete}
@@ -173,7 +178,8 @@ export default function ImageGrid({ images, loading, onDelete, onRename, onPrevi
           onDragStart={onDragStart}
           onTags={onTags}
         />
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

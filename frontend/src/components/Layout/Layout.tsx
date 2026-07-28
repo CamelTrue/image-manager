@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { LogOut, Shield, Image, LayoutGrid, Menu, X, User, Sun, Moon } from 'lucide-react'
+import * as Tooltip from '@radix-ui/react-tooltip'
 
 export default function Layout() {
   const { user, logout } = useAuthStore()
@@ -43,6 +44,7 @@ export default function Layout() {
   )
 
   return (
+    <Tooltip.Provider delayDuration={400} skipDelayDuration={200}>
     <div className="h-screen flex flex-col bg-dark-950">
       <header className="flex items-center justify-between px-4 h-13 glass border-b border-dark-600/40 shrink-0 relative z-20">
         <div className="flex items-center gap-2.5">
@@ -116,5 +118,6 @@ export default function Layout() {
         <Outlet />
       </main>
     </div>
+    </Tooltip.Provider>
   )
 }

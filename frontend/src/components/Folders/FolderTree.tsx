@@ -216,7 +216,7 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
 
       <div className="flex-1 overflow-auto py-1 px-1">
         <div
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors text-[11px] ${
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-[11px] ${
             selectedId === null
               ? 'bg-accent-500/15 text-accent-400'
               : 'text-zinc-400 hover:bg-dark-700/40 hover:text-zinc-200'
@@ -228,7 +228,7 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
         </div>
 
         <div
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors text-[11px] ${
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-[11px] ${
             favoriteFilter
               ? 'bg-accent-500/15 text-accent-400'
               : 'text-zinc-400 hover:bg-dark-700/40 hover:text-zinc-200'
@@ -239,8 +239,10 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
           <span className="font-medium">Preferiti</span>
         </div>
 
+        <div className="h-px bg-dark-600/20 mx-2 my-1.5" />
+
         <div
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors text-[11px] ${
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-[11px] ${
             timelineFilter
               ? 'bg-accent-500/15 text-accent-400'
               : 'text-zinc-400 hover:bg-dark-700/40 hover:text-zinc-200'
@@ -252,7 +254,7 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
         </div>
 
         <div
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors text-[11px] ${
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-[11px] ${
             mapFilter
               ? 'bg-accent-500/15 text-accent-400'
               : 'text-zinc-400 hover:bg-dark-700/40 hover:text-zinc-200'
@@ -263,8 +265,10 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
           <span className="font-medium">Mappa</span>
         </div>
 
+        <div className="h-px bg-dark-600/20 mx-2 my-1.5" />
+
         <div
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors text-[11px] ${
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-[11px] ${
             trashedFilter
               ? 'bg-accent-500/15 text-accent-400'
               : 'text-zinc-400 hover:bg-dark-700/40 hover:text-zinc-200'
@@ -274,6 +278,8 @@ export default function FolderTree({ folders, selectedId, onSelect, onCreate, on
           <Trash2 size={12} className={trashedFilter ? 'text-accent-400' : 'text-zinc-500'} />
           <span className="font-medium">Cestino</span>
         </div>
+
+        <div className="h-px bg-dark-600/20 mx-2 my-1.5" />
 
         {creatingRoot && (
           <div className="flex items-center gap-1 py-1 px-2 mt-0.5">

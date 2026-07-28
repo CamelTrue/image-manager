@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, Trash2, Edit3, Check, X, Tag, Heart } from 'lucide-react'
 import { getImageUrl, getThumbnailUrl } from '../../api/images'
 import type { ImageInfo } from '../../types'
+import * as Tooltip from '@radix-ui/react-tooltip'
 
 interface Props {
   image: ImageInfo
@@ -55,10 +56,10 @@ export default function ImageCard({ image, onDelete, onRename, onPreview, onFavo
 
   return (
     <div
-      className={`group relative rounded-xl overflow-hidden border transition-all duration-150 ${
+      className={`group relative rounded-xl overflow-hidden border transition-all duration-200 ${
         selected
-          ? 'bg-accent-500/10 border-accent-500/40 ring-1 ring-accent-500/20'
-          : 'bg-dark-800/40 border-dark-600/20 hover:border-dark-500/50'
+          ? 'bg-accent-500/10 border-accent-500/40 ring-2 ring-accent-500/20 shadow-lg shadow-accent-500/10'
+          : 'bg-dark-800/40 border-dark-600/20 hover:border-dark-500/40 hover:shadow-lg hover:shadow-black/20'
       }`}
       draggable={!!onDragStart}
       onDragStart={(e) => {
@@ -70,14 +71,14 @@ export default function ImageCard({ image, onDelete, onRename, onPreview, onFavo
       }}
     >
       <div
-        className="aspect-square cursor-pointer overflow-hidden relative bg-dark-900"
+        className="aspect-[4/3] cursor-pointer overflow-hidden relative bg-dark-900"
         onClick={() => selectionMode && onToggleSelect ? onToggleSelect(image.id) : onPreview(image)}
         onContextMenu={(e) => { e.preventDefault(); onToggleSelect?.(image.id) }}
       >
         <img
           src={getThumbnailUrl(image.id)}
           alt={image.original}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.05]"
           loading="lazy"
           onError={(e) => {
             const target = e.currentTarget
@@ -105,50 +106,95 @@ export default function ImageCard({ image, onDelete, onRename, onPreview, onFavo
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
 
         {!selectionMode && (
-          <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
             {onFavorite && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onFavorite(image.id) }}
-                className={`p-2 backdrop-blur-sm rounded-lg transition-colors ${
-                  image.is_favorite
-                    ? 'bg-red-500/30 text-red-400'
-                    : 'bg-dark-900/70 text-white/60 hover:text-red-400 hover:bg-red-500/20'
-                }`}
-                title={image.is_favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
-              >
-                <Heart size={13} fill={image.is_favorite ? 'currentColor' : 'none'} />
-              </button>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onFavorite(image.id) }}
+                    className={`p-2 backdrop-blur-sm rounded-lg transition-colors ${
+                      image.is_favorite
+                        ? 'bg-red-500/30 text-red-400'
+                        : 'bg-dark-900/70 text-white/60 hover:text-red-400 hover:bg-red-500/20'
+                    }`}
+                  >
+                    <Heart size={13} fill={image.is_favorite ? 'currentColor' : 'none'} />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content side="top" sideOffset={4} className="animate-tooltip-slide-up z-50 px-2 py-1 rounded-md bg-dark-700 text-[10px] text-white shadow-lg border border-dark-500/30">
+                    {image.is_favorite ? 'Rimuovi preferito' : 'Preferito'}
+                    <Tooltip.Arrow className="fill-dark-700" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
             )}
-            <button
-              onClick={(e) => { e.stopPropagation(); handleDownload() }}
-              className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-accent-500 text-white/80 hover:text-white transition-colors"
-              title="Scarica"
-            >
-              <Download size={13} />
-            </button>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDownload() }}
+                  className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-accent-500 text-white/80 hover:text-white transition-colors"
+                >
+                  <Download size={13} />
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content side="top" sideOffset={4} className="animate-tooltip-slide-up z-50 px-2 py-1 rounded-md bg-dark-700 text-[10px] text-white shadow-lg border border-dark-500/30">
+                  Scarica
+                  <Tooltip.Arrow className="fill-dark-700" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
             {onTags && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onTags(image) }}
-                className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-accent-500 text-white/80 hover:text-white transition-colors"
-                title="Tag"
-              >
-                <Tag size={13} />
-              </button>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onTags(image) }}
+                    className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-accent-500 text-white/80 hover:text-white transition-colors"
+                  >
+                    <Tag size={13} />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content side="top" sideOffset={4} className="animate-tooltip-slide-up z-50 px-2 py-1 rounded-md bg-dark-700 text-[10px] text-white shadow-lg border border-dark-500/30">
+                    Tag
+                    <Tooltip.Arrow className="fill-dark-700" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
             )}
-            <button
-              onClick={(e) => { e.stopPropagation(); setNewName(image.original); setRenaming(true) }}
-              className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-amber-500 text-white/80 hover:text-white transition-colors"
-              title="Rinomina"
-            >
-              <Edit3 size={13} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(image.id) }}
-              className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-red-500 text-white/80 hover:text-white transition-colors"
-              title="Elimina"
-            >
-              <Trash2 size={13} />
-            </button>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setNewName(image.original); setRenaming(true) }}
+                  className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-amber-500 text-white/80 hover:text-white transition-colors"
+                >
+                  <Edit3 size={13} />
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content side="top" sideOffset={4} className="animate-tooltip-slide-up z-50 px-2 py-1 rounded-md bg-dark-700 text-[10px] text-white shadow-lg border border-dark-500/30">
+                  Rinomina
+                  <Tooltip.Arrow className="fill-dark-700" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(image.id) }}
+                  className="p-2 bg-dark-900/70 backdrop-blur-sm rounded-lg hover:bg-red-500 text-white/80 hover:text-white transition-colors"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content side="top" sideOffset={4} className="animate-tooltip-slide-up z-50 px-2 py-1 rounded-md bg-dark-700 text-[10px] text-white shadow-lg border border-dark-500/30">
+                  Elimina
+                  <Tooltip.Arrow className="fill-dark-700" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
           </div>
         )}
       </div>
